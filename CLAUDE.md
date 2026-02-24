@@ -11,8 +11,10 @@ The full system architecture and requirements are in `prd.md`.
 ## Tech Stack
 
 - **Backend:** Java 21 + Spring Boot 3.3 (REST API + WebSocket via STOMP)
+- **Build:** Maven (use `mvn` / `./mvnw`, not Gradle)
+- **Logging:** Log4j2 — always use Log4j2 for all logging. Exclude Spring Boot's default Logback and use `spring-boot-starter-log4j2` instead.
 - **Frontend:** React 18 + Vite + TailwindCSS (SPA with React Router)
-- **Database:** PostgreSQL 16 with pgvector (semantic search) and pg_trgm (fuzzy text search)
+- **Database:** PostgreSQL 16 — used for **both** RDBMS and semantic search (pgvector for vector similarity, pg_trgm for fuzzy text). No separate vector DB.
 - **LLM:** OpenAI API — GPT-4o for chat, GPT-4o-mini for extraction, text-embedding-3-small for embeddings
 - **Auth:** Spring Security OAuth2 + Google SSO, JWT session tokens
 - **WhatsApp:** Whapi.cloud webhooks for multi-group monitoring
@@ -110,6 +112,9 @@ Always write end-to-end tests for every feature and run them to verify they pass
 - **Dual search modes:** Both text (pg_trgm fuzzy) and semantic (pgvector cosine similarity) search are supported on messages and listings.
 - **Idempotent webhook processing:** `whapi_msg_id` unique constraint prevents duplicate message archival.
 - **Soft deletes on listings:** Uses `deleted_at`/`deleted_by` columns, not hard delete.
+- **Maven only:** Always use Maven for builds. No Gradle.
+- **Log4j2 only:** Exclude `spring-boot-starter-logging` (Logback) from all starters and depend on `spring-boot-starter-log4j2`. Use `org.apache.logging.log4j.LogManager` / `Logger` for all logging — never SLF4J Logback or `java.util.logging`.
+- **PostgreSQL is the single data store:** All relational data, vector embeddings (pgvector), and full-text/fuzzy search (pg_trgm) live in PostgreSQL. Do not introduce a separate vector database.
 
 ## Environment Variables
 
