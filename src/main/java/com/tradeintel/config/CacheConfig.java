@@ -41,16 +41,34 @@ public class CacheConfig {
     private static final Logger log = LogManager.getLogger(CacheConfig.class);
 
     /** Cache name for the verified jargon dictionary. */
-    public static final String CACHE_JARGON     = "jargon";
+    public static final String CACHE_JARGON         = "jargon";
 
     /** Cache name for the admin-managed categories list. */
-    public static final String CACHE_CATEGORIES = "categories";
+    public static final String CACHE_CATEGORIES     = "categories";
+
+    /** Cache name for the admin-managed manufacturers list. */
+    public static final String CACHE_MANUFACTURERS  = "manufacturers";
+
+    /** Cache name for the admin-managed units list. */
+    public static final String CACHE_UNITS          = "units";
+
+    /** Cache name for the admin-managed conditions list. */
+    public static final String CACHE_CONDITIONS     = "conditions";
 
     @Value("${app.cache.jargon-ttl-minutes:10}")
     private long jargonTtlMinutes;
 
     @Value("${app.cache.categories-ttl-minutes:30}")
     private long categoriesTtlMinutes;
+
+    @Value("${app.cache.manufacturers-ttl-minutes:30}")
+    private long manufacturersTtlMinutes;
+
+    @Value("${app.cache.units-ttl-minutes:60}")
+    private long unitsTtlMinutes;
+
+    @Value("${app.cache.conditions-ttl-minutes:60}")
+    private long conditionsTtlMinutes;
 
     /**
      * Creates the primary {@link CacheManager}.
@@ -81,12 +99,38 @@ public class CacheConfig {
                         .build()
         );
 
+        manager.registerCustomCache(CACHE_MANUFACTURERS,
+                Caffeine.newBuilder()
+                        .expireAfterWrite(manufacturersTtlMinutes, TimeUnit.MINUTES)
+                        .maximumSize(2_000)
+                        .recordStats()
+                        .build()
+        );
+
+        manager.registerCustomCache(CACHE_UNITS,
+                Caffeine.newBuilder()
+                        .expireAfterWrite(unitsTtlMinutes, TimeUnit.MINUTES)
+                        .maximumSize(200)
+                        .recordStats()
+                        .build()
+        );
+
+        manager.registerCustomCache(CACHE_CONDITIONS,
+                Caffeine.newBuilder()
+                        .expireAfterWrite(conditionsTtlMinutes, TimeUnit.MINUTES)
+                        .maximumSize(100)
+                        .recordStats()
+                        .build()
+        );
+
         // Allow Spring to create dynamic caches for any @Cacheable annotation
         // that references a cache name not explicitly registered above.
         manager.setAllowNullValues(false);
 
-        log.info("Caffeine cache manager initialised: jargonTtl={}m categoriesTtl={}m",
-                jargonTtlMinutes, categoriesTtlMinutes);
+        log.info("Caffeine cache manager initialised: jargonTtl={}m categoriesTtl={}m "
+                        + "manufacturersTtl={}m unitsTtl={}m conditionsTtl={}m",
+                jargonTtlMinutes, categoriesTtlMinutes,
+                manufacturersTtlMinutes, unitsTtlMinutes, conditionsTtlMinutes);
 
         return manager;
     }
