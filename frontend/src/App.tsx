@@ -10,6 +10,12 @@ import { NotificationsPage } from './pages/NotificationsPage';
 import { CostPage } from './pages/CostPage';
 import { ReviewPage } from './pages/ReviewPage';
 import { AdminPage } from './pages/AdminPage';
+import { UserManagementPage } from './pages/admin/UserManagementPage';
+import { AuditLogPage } from './pages/admin/AuditLogPage';
+import { GroupManagementPage } from './pages/admin/GroupManagementPage';
+import { CostReportPage } from './pages/admin/CostReportPage';
+import { NormalizedValuePage } from './pages/admin/NormalizedValuePage';
+import { JargonPage } from './pages/admin/JargonPage';
 import type { UserRole } from './types/user';
 
 /**
@@ -105,48 +111,33 @@ export function App() {
             <Route path="/review" element={<ReviewPage />} />
             <Route
               path="/admin/categories"
-              element={<PlaceholderPage title="Categories" />}
+              element={<NormalizedValuePage type="categories" />}
             />
             <Route
               path="/admin/manufacturers"
-              element={<PlaceholderPage title="Manufacturers" />}
+              element={<NormalizedValuePage type="manufacturers" />}
             />
             <Route
               path="/admin/units"
-              element={<PlaceholderPage title="Units" />}
+              element={<NormalizedValuePage type="units" />}
             />
             <Route
               path="/admin/conditions"
-              element={<PlaceholderPage title="Conditions" />}
+              element={<NormalizedValuePage type="conditions" />}
             />
-            <Route
-              path="/admin/jargon"
-              element={<PlaceholderPage title="Jargon Dictionary" />}
-            />
+            <Route path="/admin/jargon" element={<JargonPage />} />
           </Route>
 
           {/* Uber admin routes (uber_admin only) */}
           <Route element={<RoleGuard roles={['uber_admin']} />}>
-            <Route
-              path="/admin/users"
-              element={<PlaceholderPage title="User Management" />}
-            />
+            <Route path="/admin/users" element={<UserManagementPage />} />
             <Route
               path="/admin/chats"
               element={<PlaceholderPage title="All Chats" />}
             />
-            <Route
-              path="/admin/costs"
-              element={<PlaceholderPage title="Cost Report" />}
-            />
-            <Route
-              path="/admin/audit"
-              element={<PlaceholderPage title="Audit Log" />}
-            />
-            <Route
-              path="/admin/groups"
-              element={<PlaceholderPage title="WhatsApp Groups" />}
-            />
+            <Route path="/admin/costs" element={<CostReportPage />} />
+            <Route path="/admin/audit" element={<AuditLogPage />} />
+            <Route path="/admin/groups" element={<GroupManagementPage />} />
             <Route path="/admin" element={<AdminPage />} />
           </Route>
 

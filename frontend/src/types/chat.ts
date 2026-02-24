@@ -29,6 +29,23 @@ export interface ChatMessage {
   createdAt: string;
 }
 
+/**
+ * Backend response shape for GET /chat/sessions/:id
+ */
+export interface SessionDetail {
+  id: string;
+  title: string | null;
+  messages: ChatMessage[];
+}
+
+/**
+ * Backend response shape for POST /chat/sessions/:id/messages
+ */
+export interface SendMessageResponse {
+  message: ChatMessage;
+  toolResults: ToolCall[];
+}
+
 export interface SendMessageRequest {
   content: string;
 }
