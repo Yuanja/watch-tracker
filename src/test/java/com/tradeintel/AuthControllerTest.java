@@ -48,12 +48,14 @@ class AuthControllerTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    @Autowired
+    private TestDatabaseCleaner dbCleaner;
+
     private User testUser;
 
     @BeforeEach
     void setUp() {
-        // Clean up any leftover users from previous tests in this class.
-        userRepository.deleteAll();
+        dbCleaner.cleanAll();
 
         testUser = TestHelper.createUser(userRepository, "testuser@example.com", UserRole.user);
         log.info("Set up test user id={}", testUser.getId());

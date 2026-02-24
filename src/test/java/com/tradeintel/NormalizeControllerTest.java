@@ -66,6 +66,9 @@ class NormalizeControllerTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    @Autowired
+    private TestDatabaseCleaner dbCleaner;
+
     /** Regular user — should be denied access to normalize endpoints. */
     private User regularUser;
 
@@ -77,11 +80,7 @@ class NormalizeControllerTest {
 
     @BeforeEach
     void setUp() {
-        // Tear down in FK-dependency order: audit_log references users.
-        auditLogRepository.deleteAll();
-        categoryRepository.deleteAll();
-        manufacturerRepository.deleteAll();
-        userRepository.deleteAll();
+        dbCleaner.cleanAll();
 
         regularUser = TestHelper.createUser(userRepository, "regular@example.com", UserRole.user);
         adminUser   = TestHelper.createUser(userRepository, "admin@example.com",   UserRole.admin);

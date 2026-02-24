@@ -66,6 +66,9 @@ class ReplayControllerTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    @Autowired
+    private TestDatabaseCleaner dbCleaner;
+
     /** The authenticated user used in all test requests that require auth. */
     private User testUser;
 
@@ -77,9 +80,7 @@ class ReplayControllerTest {
 
     @BeforeEach
     void setUp() {
-        rawMessageRepository.deleteAll();
-        groupRepository.deleteAll();
-        userRepository.deleteAll();
+        dbCleaner.cleanAll();
 
         testUser = TestHelper.createUser(userRepository, "replay-user@example.com", UserRole.user);
 

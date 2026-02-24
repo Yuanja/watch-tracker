@@ -61,6 +61,9 @@ class AdminControllerTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    @Autowired
+    private TestDatabaseCleaner dbCleaner;
+
     /** Admin user — NOT uber_admin; should be denied all /api/admin endpoints. */
     private User adminUser;
 
@@ -72,10 +75,7 @@ class AdminControllerTest {
 
     @BeforeEach
     void setUp() {
-        // Tear down in FK-dependency order: audit_log references users, groups.
-        auditLogRepository.deleteAll();
-        groupRepository.deleteAll();
-        userRepository.deleteAll();
+        dbCleaner.cleanAll();
 
         adminUser  = TestHelper.createUser(userRepository, "admin@admin-test.com",      UserRole.admin);
         uberAdmin  = TestHelper.createUser(userRepository, "uber@admin-test.com",       UserRole.uber_admin);
@@ -92,9 +92,7 @@ class AdminControllerTest {
      */
     @AfterEach
     void tearDown() {
-        auditLogRepository.deleteAll();
-        groupRepository.deleteAll();
-        userRepository.deleteAll();
+        dbCleaner.cleanAll();
     }
 
     // =========================================================================

@@ -76,6 +76,9 @@ class ListingControllerTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    @Autowired
+    private TestDatabaseCleaner dbCleaner;
+
     /** Regular authenticated user — read access, no mutation rights. */
     private User regularUser;
 
@@ -90,12 +93,7 @@ class ListingControllerTest {
 
     @BeforeEach
     void setUp() {
-        // Tear down in FK-dependency order: audit_log references users.
-        auditLogRepository.deleteAll();
-        listingRepository.deleteAll();
-        rawMessageRepository.deleteAll();
-        groupRepository.deleteAll();
-        userRepository.deleteAll();
+        dbCleaner.cleanAll();
 
         regularUser = TestHelper.createUser(userRepository, "user@listings-test.com",       UserRole.user);
         adminUser   = TestHelper.createUser(userRepository, "admin@listings-test.com",      UserRole.admin);
@@ -145,11 +143,7 @@ class ListingControllerTest {
      */
     @AfterEach
     void tearDown() {
-        listingRepository.deleteAll();
-        rawMessageRepository.deleteAll();
-        groupRepository.deleteAll();
-        auditLogRepository.deleteAll();
-        userRepository.deleteAll();
+        dbCleaner.cleanAll();
     }
 
     // =========================================================================
