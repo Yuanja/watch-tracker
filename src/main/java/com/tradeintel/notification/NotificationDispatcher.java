@@ -7,9 +7,11 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 
 /**
  * Dispatches email notifications to users when a listing matches one of their
@@ -31,11 +33,14 @@ public class NotificationDispatcher {
 
     private final JavaMailSender mailSender;
     private final NotificationRuleRepository ruleRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public NotificationDispatcher(JavaMailSender mailSender,
-                                  NotificationRuleRepository ruleRepository) {
+                                  NotificationRuleRepository ruleRepository,
+                                  SimpMessagingTemplate messagingTemplate) {
         this.mailSender = mailSender;
         this.ruleRepository = ruleRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -68,6 +73,23 @@ public class NotificationDispatcher {
 
             log.info("Notification email sent: rule={}, listing={}, to={}",
                     rule.getId(), listing.getId(), email);
+
+            // Push real-time notification to the user via WebSocket
+            try {
+                String userId = rule.getUser().getId().toString();
+                Map<String, Object> wsPayload = Map.of(
+                        "type", "notification_match",
+                        "ruleId", rule.getId().toString(),
+                        "listingId", listing.getId().toString(),
+                        "description", listing.getItemDescription(),
+                        "ruleName", rule.getNlRule()
+                );
+                messagingTemplate.convertAndSendToUser(
+                        userId, "/queue/notifications", wsPayload);
+                log.debug("WebSocket notification pushed to user {}", userId);
+            } catch (Exception wsEx) {
+                log.warn("WebSocket notification push failed (non-fatal): {}", wsEx.getMessage());
+            }
         } catch (MailException e) {
             log.error("Failed to send notification email: rule={}, listing={}, to={}, error={}",
                     rule.getId(), listing.getId(), email, e.getMessage());

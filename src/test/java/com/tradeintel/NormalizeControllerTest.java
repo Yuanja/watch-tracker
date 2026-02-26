@@ -20,6 +20,7 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
@@ -402,5 +403,48 @@ class NormalizeControllerTest {
                                 {"name": "Forbidden Manufacturer"}
                                 """))
                 .andExpect(status().isForbidden());
+    }
+
+    // =========================================================================
+    // Audit logging — verify normalize CRUD operations create audit entries
+    // =========================================================================
+
+    @Test
+    @DisplayName("Category create/update/deactivate operations generate audit log entries")
+    void categoryCrud_generatesAuditLogEntries() throws Exception {
+        String auth = TestHelper.bearerHeader(jwtTokenProvider, adminUser);
+        long auditCountBefore = auditLogRepository.count();
+
+        // Create
+        MvcResult createResult = mockMvc.perform(post("/api/normalize/categories")
+                        .header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Audit Test Category"}
+                                """))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String location = createResult.getResponse().getHeader("Location");
+        String id = location.substring(location.lastIndexOf('/') + 1);
+
+        // Update
+        mockMvc.perform(put("/api/normalize/categories/{id}", id)
+                        .header("Authorization", auth)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Audit Test Category Updated"}
+                                """))
+                .andExpect(status().isOk());
+
+        // Deactivate
+        mockMvc.perform(delete("/api/normalize/categories/{id}", id)
+                        .header("Authorization", auth))
+                .andExpect(status().isNoContent());
+
+        // 3 audit entries should have been generated (create + update + deactivate)
+        long auditCountAfter = auditLogRepository.count();
+        assertThat(auditCountAfter - auditCountBefore).isGreaterThanOrEqualTo(3);
+        log.info("Verified category CRUD generated {} audit log entries", auditCountAfter - auditCountBefore);
     }
 }

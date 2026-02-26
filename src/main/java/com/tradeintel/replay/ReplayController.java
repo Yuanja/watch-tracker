@@ -90,12 +90,15 @@ public class ReplayController {
     public ResponseEntity<Page<ReplayMessageDTO>> searchMessages(
             @RequestParam(required = false) UUID groupId,
             @RequestParam(required = false) String q,
+            @RequestParam(required = false) String semantic,
             @RequestParam(required = false) String sender,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
 
+        // When no groupId is specified, perform a cross-group search
         if (groupId == null) {
-            return ResponseEntity.badRequest().build();
+            Page<ReplayMessageDTO> dtos = messageSearchService.search(q, semantic, page, size);
+            return ResponseEntity.ok(dtos);
         }
 
         if (!groupRepository.existsById(groupId)) {

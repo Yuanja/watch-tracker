@@ -8,6 +8,7 @@ import com.tradeintel.admin.ChatSessionRepository;
 import com.tradeintel.chat.dto.ChatMessageDTO;
 import com.tradeintel.chat.dto.ChatResponseDTO;
 import com.tradeintel.chat.tools.CreateNotificationTool;
+import com.tradeintel.chat.tools.GetListingDetailsTool;
 import com.tradeintel.chat.tools.MarketStatsTool;
 import com.tradeintel.chat.tools.SearchListingsTool;
 import com.tradeintel.chat.tools.SearchMessagesTool;
@@ -67,6 +68,7 @@ public class ChatAgentService {
     private final SearchMessagesTool searchMessagesTool;
     private final MarketStatsTool marketStatsTool;
     private final CreateNotificationTool createNotificationTool;
+    private final GetListingDetailsTool getListingDetailsTool;
     private final ObjectMapper objectMapper;
     private final String chatModel;
     private final String systemPrompt;
@@ -79,6 +81,7 @@ public class ChatAgentService {
                             SearchMessagesTool searchMessagesTool,
                             MarketStatsTool marketStatsTool,
                             CreateNotificationTool createNotificationTool,
+                            GetListingDetailsTool getListingDetailsTool,
                             ObjectMapper objectMapper,
                             @Value("${app.openai.chat-model}") String chatModel) {
         this.sessionRepository = sessionRepository;
@@ -89,6 +92,7 @@ public class ChatAgentService {
         this.searchMessagesTool = searchMessagesTool;
         this.marketStatsTool = marketStatsTool;
         this.createNotificationTool = createNotificationTool;
+        this.getListingDetailsTool = getListingDetailsTool;
         this.objectMapper = objectMapper;
         this.chatModel = chatModel;
         this.systemPrompt = loadSystemPrompt();
@@ -303,6 +307,7 @@ public class ChatAgentService {
             case "search_messages" -> searchMessagesTool.execute(params);
             case "market_stats" -> marketStatsTool.execute(params);
             case "create_notification" -> createNotificationTool.execute(params, user);
+            case "get_listing_details" -> getListingDetailsTool.execute(params);
             default -> {
                 log.warn("Unknown tool requested: {}", toolName);
                 yield "{\"error\": \"Unknown tool: " + toolName + "\"}";

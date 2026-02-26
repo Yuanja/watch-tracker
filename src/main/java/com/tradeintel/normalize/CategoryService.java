@@ -1,5 +1,6 @@
 package com.tradeintel.normalize;
 
+import com.tradeintel.admin.AuditService;
 import com.tradeintel.common.entity.Category;
 import com.tradeintel.common.exception.ResourceNotFoundException;
 import com.tradeintel.config.CacheConfig;
@@ -34,9 +35,12 @@ public class CategoryService {
     private static final Logger log = LogManager.getLogger(CategoryService.class);
 
     private final CategoryRepository categoryRepository;
+    private final AuditService auditService;
 
-    public CategoryService(CategoryRepository categoryRepository) {
+    public CategoryService(CategoryRepository categoryRepository,
+                           AuditService auditService) {
         this.categoryRepository = categoryRepository;
+        this.auditService = auditService;
     }
 
     // -------------------------------------------------------------------------
@@ -107,6 +111,7 @@ public class CategoryService {
 
         Category saved = categoryRepository.save(category);
         log.info("Created category id={} name='{}'", saved.getId(), saved.getName());
+        auditService.log(null, "category.create", "Category", saved.getId(), null, null, null);
         return CategoryResponse.fromEntity(saved);
     }
 
@@ -147,6 +152,7 @@ public class CategoryService {
 
         Category saved = categoryRepository.save(category);
         log.info("Updated category id={} name='{}'", saved.getId(), saved.getName());
+        auditService.log(null, "category.update", "Category", saved.getId(), null, null, null);
         return CategoryResponse.fromEntity(saved);
     }
 
@@ -165,6 +171,7 @@ public class CategoryService {
         category.setIsActive(false);
         categoryRepository.save(category);
         log.info("Deactivated category id={} name='{}'", id, category.getName());
+        auditService.log(null, "category.deactivate", "Category", id, null, null, null);
     }
 
     // -------------------------------------------------------------------------

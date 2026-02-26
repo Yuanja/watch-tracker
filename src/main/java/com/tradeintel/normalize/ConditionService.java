@@ -1,5 +1,6 @@
 package com.tradeintel.normalize;
 
+import com.tradeintel.admin.AuditService;
 import com.tradeintel.common.entity.Condition;
 import com.tradeintel.common.exception.ResourceNotFoundException;
 import com.tradeintel.config.CacheConfig;
@@ -33,9 +34,12 @@ public class ConditionService {
     private static final Logger log = LogManager.getLogger(ConditionService.class);
 
     private final ConditionRepository conditionRepository;
+    private final AuditService auditService;
 
-    public ConditionService(ConditionRepository conditionRepository) {
+    public ConditionService(ConditionRepository conditionRepository,
+                            AuditService auditService) {
         this.conditionRepository = conditionRepository;
+        this.auditService = auditService;
     }
 
     // -------------------------------------------------------------------------
@@ -107,6 +111,7 @@ public class ConditionService {
 
         Condition saved = conditionRepository.save(condition);
         log.info("Created condition id={} name='{}'", saved.getId(), saved.getName());
+        auditService.log(null, "condition.create", "Condition", saved.getId(), null, null, null);
         return ConditionResponse.fromEntity(saved);
     }
 
@@ -136,6 +141,7 @@ public class ConditionService {
 
         Condition saved = conditionRepository.save(condition);
         log.info("Updated condition id={} name='{}'", saved.getId(), saved.getName());
+        auditService.log(null, "condition.update", "Condition", saved.getId(), null, null, null);
         return ConditionResponse.fromEntity(saved);
     }
 
@@ -153,6 +159,7 @@ public class ConditionService {
         condition.setIsActive(false);
         conditionRepository.save(condition);
         log.info("Deactivated condition id={} name='{}'", id, condition.getName());
+        auditService.log(null, "condition.deactivate", "Condition", id, null, null, null);
     }
 
     // -------------------------------------------------------------------------

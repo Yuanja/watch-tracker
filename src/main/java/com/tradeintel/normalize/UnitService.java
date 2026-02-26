@@ -1,5 +1,6 @@
 package com.tradeintel.normalize;
 
+import com.tradeintel.admin.AuditService;
 import com.tradeintel.common.entity.Unit;
 import com.tradeintel.common.exception.ResourceNotFoundException;
 import com.tradeintel.config.CacheConfig;
@@ -33,9 +34,12 @@ public class UnitService {
     private static final Logger log = LogManager.getLogger(UnitService.class);
 
     private final UnitRepository unitRepository;
+    private final AuditService auditService;
 
-    public UnitService(UnitRepository unitRepository) {
+    public UnitService(UnitRepository unitRepository,
+                       AuditService auditService) {
         this.unitRepository = unitRepository;
+        this.auditService = auditService;
     }
 
     // -------------------------------------------------------------------------
@@ -102,6 +106,7 @@ public class UnitService {
         Unit saved = unitRepository.save(unit);
         log.info("Created unit id={} name='{}' abbreviation='{}'",
                 saved.getId(), saved.getName(), saved.getAbbreviation());
+        auditService.log(null, "unit.create", "Unit", saved.getId(), null, null, null);
         return UnitResponse.fromEntity(saved);
     }
 
@@ -129,6 +134,7 @@ public class UnitService {
         Unit saved = unitRepository.save(unit);
         log.info("Updated unit id={} name='{}' abbreviation='{}'",
                 saved.getId(), saved.getName(), saved.getAbbreviation());
+        auditService.log(null, "unit.update", "Unit", saved.getId(), null, null, null);
         return UnitResponse.fromEntity(saved);
     }
 
@@ -146,6 +152,7 @@ public class UnitService {
         unit.setIsActive(false);
         unitRepository.save(unit);
         log.info("Deactivated unit id={} name='{}'", id, unit.getName());
+        auditService.log(null, "unit.deactivate", "Unit", id, null, null, null);
     }
 
     // -------------------------------------------------------------------------

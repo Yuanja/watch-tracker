@@ -10,12 +10,15 @@ import com.tradeintel.common.event.NewMessageEvent;
 import com.tradeintel.normalize.JargonService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -56,6 +59,7 @@ public class MessageProcessingService {
     private final ReviewQueueItemRepository reviewQueueItemRepository;
     private final NotificationMatcher notificationMatcher;
     private final JargonService jargonService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     public MessageProcessingService(RawMessageRepository rawMessageRepository,
                                     EmbeddingService embeddingService,
@@ -64,7 +68,8 @@ public class MessageProcessingService {
                                     ConfidenceRouter confidenceRouter,
                                     ReviewQueueItemRepository reviewQueueItemRepository,
                                     NotificationMatcher notificationMatcher,
-                                    JargonService jargonService) {
+                                    JargonService jargonService,
+                                    SimpMessagingTemplate messagingTemplate) {
         this.rawMessageRepository = rawMessageRepository;
         this.embeddingService = embeddingService;
         this.jargonExpander = jargonExpander;
@@ -73,6 +78,7 @@ public class MessageProcessingService {
         this.reviewQueueItemRepository = reviewQueueItemRepository;
         this.notificationMatcher = notificationMatcher;
         this.jargonService = jargonService;
+        this.messagingTemplate = messagingTemplate;
     }
 
     /**
@@ -144,13 +150,41 @@ public class MessageProcessingService {
                 }
             }
 
-            // Step 7: Match notifications for active listings
+            // Step 7: Match notifications for active listings and broadcast via WebSocket
             for (Listing listing : listings) {
                 if (listing.getStatus() == ListingStatus.active) {
+                    // Broadcast new listing event via STOMP
+                    try {
+                        Map<String, Object> wsPayload = new HashMap<>();
+                        wsPayload.put("type", "new_listing");
+                        wsPayload.put("listingId", listing.getId().toString());
+                        wsPayload.put("description", listing.getItemDescription());
+                        wsPayload.put("intent", listing.getIntent().name());
+                        if (listing.getGroup() != null) {
+                            wsPayload.put("groupId", listing.getGroup().getId().toString());
+                        }
+                        messagingTemplate.convertAndSend("/topic/listings", wsPayload);
+                    } catch (Exception e) {
+                        log.warn("WebSocket broadcast failed for listing {} (non-fatal): {}",
+                                listing.getId(), e.getMessage());
+                    }
+
                     try {
                         notificationMatcher.matchAndDispatch(listing);
                     } catch (Exception e) {
                         log.warn("Notification matching failed for listing {} (non-fatal): {}",
+                                listing.getId(), e.getMessage());
+                    }
+                } else if (listing.getStatus() == ListingStatus.pending_review) {
+                    // Broadcast review queue update via STOMP
+                    try {
+                        Map<String, Object> wsPayload = new HashMap<>();
+                        wsPayload.put("type", "new_review_item");
+                        wsPayload.put("listingId", listing.getId().toString());
+                        wsPayload.put("description", listing.getItemDescription());
+                        messagingTemplate.convertAndSend("/topic/review-queue", wsPayload);
+                    } catch (Exception e) {
+                        log.warn("WebSocket broadcast failed for review item {} (non-fatal): {}",
                                 listing.getId(), e.getMessage());
                     }
                 }

@@ -255,8 +255,8 @@ class ReplayControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/messages/search returns 400 when groupId is missing")
-    void searchMessages_missingGroupId_returns400() throws Exception {
+    @DisplayName("GET /api/messages/search performs cross-group search when groupId is omitted")
+    void searchMessages_missingGroupId_returnsCrossGroupResults() throws Exception {
         String auth = TestHelper.bearerHeader(jwtTokenProvider, testUser);
 
         mockMvc.perform(get("/api/messages/search")
@@ -265,7 +265,8 @@ class ReplayControllerTest {
                         .param("size", "10")
                         .header("Authorization", auth)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", notNullValue()));
     }
 
     @Test
@@ -354,6 +355,23 @@ class ReplayControllerTest {
                 .andExpect(jsonPath("$.totalElements", equalTo(0)));
 
         log.info("Verified combined text query + sender filter");
+    }
+
+    @Test
+    @DisplayName("GET /api/messages/search with semantic param returns 200 (cross-group semantic search)")
+    void searchMessages_withSemanticParam_returnsCrossGroupResults() throws Exception {
+        String auth = TestHelper.bearerHeader(jwtTokenProvider, testUser);
+
+        mockMvc.perform(get("/api/messages/search")
+                        .param("semantic", "industrial valve parts")
+                        .param("page", "0")
+                        .param("size", "10")
+                        .header("Authorization", auth)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content", notNullValue()));
+
+        log.info("Verified semantic search without groupId returns 200 with cross-group results");
     }
 
     @Test

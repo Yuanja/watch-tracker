@@ -1,5 +1,6 @@
 package com.tradeintel.normalize;
 
+import com.tradeintel.admin.AuditService;
 import com.tradeintel.common.entity.Manufacturer;
 import com.tradeintel.common.exception.ResourceNotFoundException;
 import com.tradeintel.config.CacheConfig;
@@ -35,9 +36,12 @@ public class ManufacturerService {
     private static final Logger log = LogManager.getLogger(ManufacturerService.class);
 
     private final ManufacturerRepository manufacturerRepository;
+    private final AuditService auditService;
 
-    public ManufacturerService(ManufacturerRepository manufacturerRepository) {
+    public ManufacturerService(ManufacturerRepository manufacturerRepository,
+                               AuditService auditService) {
         this.manufacturerRepository = manufacturerRepository;
+        this.auditService = auditService;
     }
 
     // -------------------------------------------------------------------------
@@ -113,6 +117,7 @@ public class ManufacturerService {
 
         Manufacturer saved = manufacturerRepository.save(manufacturer);
         log.info("Created manufacturer id={} name='{}'", saved.getId(), saved.getName());
+        auditService.log(null, "manufacturer.create", "Manufacturer", saved.getId(), null, null, null);
         return ManufacturerResponse.fromEntity(saved);
     }
 
@@ -139,6 +144,7 @@ public class ManufacturerService {
 
         Manufacturer saved = manufacturerRepository.save(manufacturer);
         log.info("Updated manufacturer id={} name='{}'", saved.getId(), saved.getName());
+        auditService.log(null, "manufacturer.update", "Manufacturer", saved.getId(), null, null, null);
         return ManufacturerResponse.fromEntity(saved);
     }
 
@@ -156,6 +162,7 @@ public class ManufacturerService {
         manufacturer.setIsActive(false);
         manufacturerRepository.save(manufacturer);
         log.info("Deactivated manufacturer id={} name='{}'", id, manufacturer.getName());
+        auditService.log(null, "manufacturer.deactivate", "Manufacturer", id, null, null, null);
     }
 
     // -------------------------------------------------------------------------
