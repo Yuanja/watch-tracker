@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
@@ -17,10 +18,10 @@ import java.io.IOException;
  * redirecting the browser to the React SPA with the token as a query parameter.
  *
  * <p>The React app reads the {@code token} query parameter on the
- * {@code /auth/callback} route, stores it in local storage, and then
+ * {@code /login} route, stores it in local storage, and then
  * redirects the user to the main application.
  *
- * <p>The redirect base URL defaults to {@code http://localhost:5173/auth/callback}
+ * <p>The redirect base URL defaults to {@code http://localhost:5173/login}
  * for local development and should be overridden via the
  * {@code app.oauth2.redirect-uri} property in production.
  */
@@ -32,16 +33,17 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     /** Query parameter name used to carry the JWT back to the React SPA. */
     private static final String TOKEN_PARAM = "token";
 
-    /** Default redirect target — overridden in production via config. */
-    private static final String DEFAULT_REDIRECT_URI = "http://localhost:5173/auth/callback";
-
     private final JwtTokenProvider tokenProvider;
+    private final String redirectBaseUri;
 
-    public OAuth2SuccessHandler(JwtTokenProvider tokenProvider) {
+    public OAuth2SuccessHandler(JwtTokenProvider tokenProvider,
+                                @Value("${app.oauth2.redirect-uri:http://localhost:5173/login}")
+                                String redirectBaseUri) {
         this.tokenProvider = tokenProvider;
+        this.redirectBaseUri = redirectBaseUri;
         // Disable the default saved-request mechanism; we always redirect to the SPA.
         setAlwaysUseDefaultTargetUrl(true);
-        setDefaultTargetUrl(DEFAULT_REDIRECT_URI);
+        setDefaultTargetUrl(redirectBaseUri);
     }
 
     @Override
@@ -57,7 +59,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         log.debug("Generated JWT for user id={} email={}", user.getId(), user.getEmail());
 
         String redirectUri = UriComponentsBuilder
-                .fromUriString(DEFAULT_REDIRECT_URI)
+                .fromUriString(redirectBaseUri)
                 .queryParam(TOKEN_PARAM, token)
                 .build()
                 .toUriString();
