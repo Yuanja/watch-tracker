@@ -6,6 +6,7 @@ import { LoadingOverlay } from '../common/LoadingSpinner';
 import { EmptyState } from '../common/EmptyState';
 import { Pagination } from '../common/Pagination';
 import { ReviewCard } from './ReviewCard';
+import { useWebSocket } from '../../hooks/useWebSocket';
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
 
@@ -86,6 +87,11 @@ export function ReviewQueue() {
   const [page, setPage] = useState(0);
   const { toasts, addToast, removeToast } = useToasts();
   const queryClient = useQueryClient();
+
+  // Real-time updates: refresh queue when new review items arrive
+  useWebSocket('/topic/review-queue', useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['review-queue'] });
+  }, [queryClient]));
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['review-queue', page],

@@ -53,8 +53,8 @@ export interface ListingSearchRequest {
   partNumber?: string;
   priceMin?: number;
   priceMax?: number;
-  dateFrom?: string;
-  dateTo?: string;
+  createdAfter?: string;
+  createdBefore?: string;
   q?: string;
   semanticQuery?: string;
   page?: number;

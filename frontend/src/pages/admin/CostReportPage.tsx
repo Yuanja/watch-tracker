@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { BarChart2 } from 'lucide-react';
-import { getAllCosts } from '../../api/admin';
+import { BarChart2, Download } from 'lucide-react';
+import { getAllCosts, exportCostsCsv } from '../../api/admin';
 import type { AllUserCostRow } from '../../api/admin';
 import { EmptyState } from '../../components/common/EmptyState';
 import { LoadingOverlay } from '../../components/common/LoadingSpinner';
@@ -35,10 +36,28 @@ function CostRow({ row }: { row: AllUserCostRow }) {
 }
 
 export function CostReportPage() {
+  const [isExporting, setIsExporting] = useState(false);
   const { data: costs, isLoading, isError } = useQuery({
     queryKey: ['adminCosts'],
     queryFn: getAllCosts,
   });
+
+  async function handleExportCsv() {
+    try {
+      setIsExporting(true);
+      const blob = await exportCostsCsv();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cost-report-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch {
+      // Silently fail - user can retry
+    } finally {
+      setIsExporting(false);
+    }
+  }
 
   const totals = costs?.reduce(
     (acc, row) => ({
@@ -54,18 +73,30 @@ export function CostReportPage() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100">
-            <BarChart2 className="h-5 w-5 text-blue-600" />
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100">
+              <BarChart2 className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900">
+                Cost Report
+              </h1>
+              <p className="text-xs text-gray-500">
+                OpenAI token usage and costs by user
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900">
-              Cost Report
-            </h1>
-            <p className="text-xs text-gray-500">
-              OpenAI token usage and costs by user
-            </p>
-          </div>
+          {costs && costs.length > 0 && (
+            <button
+              onClick={handleExportCsv}
+              disabled={isExporting}
+              className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <Download className="h-4 w-4" />
+              {isExporting ? 'Exporting...' : 'Export CSV'}
+            </button>
+          )}
         </div>
       </div>
 

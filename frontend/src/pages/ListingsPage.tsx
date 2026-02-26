@@ -1,7 +1,8 @@
 import { useState, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { List, TrendingUp, TrendingDown, Clock, Activity } from 'lucide-react';
 import { getListings, getListingStats } from '../api/listings';
+import { useWebSocket } from '../hooks/useWebSocket';
 import type { ListingSearchRequest, ListingIntent, ListingStatus } from '../types/listing';
 import { LoadingOverlay } from '../components/common/LoadingSpinner';
 import { ListingFilters } from '../components/listings/ListingFilters';
@@ -35,6 +36,7 @@ function StatCard({ label, value, icon, iconBg }: StatCardProps) {
 const PAGE_SIZE = 20;
 
 export function ListingsPage() {
+  const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
   const [textQuery, setTextQuery] = useState('');
   const [draftQuery, setDraftQuery] = useState('');
@@ -43,6 +45,12 @@ export function ListingsPage() {
   const [priceMin, setPriceMin] = useState('');
   const [priceMax, setPriceMax] = useState('');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Real-time updates: refresh listings when new ones arrive via WebSocket
+  useWebSocket('/topic/listings', useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['listings'] });
+    queryClient.invalidateQueries({ queryKey: ['listing-stats'] });
+  }, [queryClient]));
 
   const searchParams: ListingSearchRequest = {
     page,
