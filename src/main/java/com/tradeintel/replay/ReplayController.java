@@ -29,11 +29,14 @@ public class ReplayController {
 
     private final RawMessageRepository rawMessageRepository;
     private final WhatsappGroupRepository groupRepository;
+    private final MessageSearchService messageSearchService;
 
     public ReplayController(RawMessageRepository rawMessageRepository,
-                           WhatsappGroupRepository groupRepository) {
+                           WhatsappGroupRepository groupRepository,
+                           MessageSearchService messageSearchService) {
         this.rawMessageRepository = rawMessageRepository;
         this.groupRepository = groupRepository;
+        this.messageSearchService = messageSearchService;
     }
 
     @GetMapping("/groups")
@@ -95,17 +98,12 @@ public class ReplayController {
             return ResponseEntity.badRequest().build();
         }
 
-        WhatsappGroup group = groupRepository.findById(groupId).orElse(null);
-        if (group == null) {
+        if (!groupRepository.existsById(groupId)) {
             return ResponseEntity.notFound().build();
         }
 
-        Pageable pageable = PageRequest.of(page, size);
-        Page<RawMessage> messages = rawMessageRepository.findByGroupIdWithFilters(
-                groupId, sender, null, null, pageable);
-
-        String groupName = group.getGroupName();
-        Page<ReplayMessageDTO> dtos = messages.map(msg -> ReplayMessageDTO.fromEntity(msg, groupName));
+        Page<ReplayMessageDTO> dtos = messageSearchService.searchByFilters(
+                groupId, sender, null, null, page, size);
         return ResponseEntity.ok(dtos);
     }
 }

@@ -45,6 +45,9 @@ public class ListingSearchRequest {
     /** Full-text keyword search on item description and part number. */
     private String query;
 
+    /** Semantic query for vector similarity search. */
+    private String semanticQuery;
+
     /** Zero-based page index. */
     private int page = 0;
 
@@ -136,6 +139,14 @@ public class ListingSearchRequest {
 
     public void setQuery(String query) {
         this.query = query;
+    }
+
+    public String getSemanticQuery() {
+        return semanticQuery;
+    }
+
+    public void setSemanticQuery(String semanticQuery) {
+        this.semanticQuery = semanticQuery;
     }
 
     public int getPage() {

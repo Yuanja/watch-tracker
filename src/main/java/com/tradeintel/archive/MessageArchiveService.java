@@ -20,11 +20,14 @@ public class MessageArchiveService {
 
     private final RawMessageRepository rawMessageRepository;
     private final WhatsappGroupRepository groupRepository;
+    private final MediaDownloadService mediaDownloadService;
 
     public MessageArchiveService(RawMessageRepository rawMessageRepository,
-                                 WhatsappGroupRepository groupRepository) {
+                                 WhatsappGroupRepository groupRepository,
+                                 MediaDownloadService mediaDownloadService) {
         this.rawMessageRepository = rawMessageRepository;
         this.groupRepository = groupRepository;
+        this.mediaDownloadService = mediaDownloadService;
     }
 
     @Transactional
@@ -74,7 +77,18 @@ public class MessageArchiveService {
         }
 
         try {
-            return rawMessageRepository.save(rawMessage);
+            RawMessage saved = rawMessageRepository.save(rawMessage);
+
+            // Download media to local storage if present
+            if (saved.getMediaUrl() != null && !saved.getMediaUrl().isBlank()) {
+                String localPath = mediaDownloadService.download(saved);
+                if (localPath != null) {
+                    saved.setMediaLocalPath(localPath);
+                    rawMessageRepository.save(saved);
+                }
+            }
+
+            return saved;
         } catch (DataIntegrityViolationException e) {
             log.debug("Duplicate message ignored: {}", msg.getId());
             return null;
