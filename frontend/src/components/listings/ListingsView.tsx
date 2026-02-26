@@ -1,8 +1,14 @@
+import { useState, useCallback } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Listing } from '../../types/listing';
+import { updateListing, deleteListing } from '../../api/listings';
+import { useAuth } from '../../contexts/AuthContext';
 import { EmptyState } from '../common/EmptyState';
 import { Pagination } from '../common/Pagination';
+import { ConfirmDialog } from '../common/ConfirmDialog';
 import { ListingCard } from './ListingCard';
 import { ListingDetail } from './ListingDetail';
+import { ListingEditModal } from './ListingEditModal';
 
 interface ListingsViewProps {
   listings: Listing[];
@@ -25,6 +31,34 @@ export function ListingsView({
   onToggleExpand,
   onPageChange,
 }: ListingsViewProps) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [editingListing, setEditingListing] = useState<Listing | null>(null);
+  const [deletingListing, setDeletingListing] = useState<Listing | null>(null);
+
+  const isAdmin = user?.role === 'admin' || user?.role === 'uber_admin';
+  const isUberAdmin = user?.role === 'uber_admin';
+
+  const editMutation = useMutation({
+    mutationFn: ({ id, updates }: { id: string; updates: Record<string, unknown> }) =>
+      updateListing(id, updates as Partial<Listing>),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+      setEditingListing(null);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteListing(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+      queryClient.invalidateQueries({ queryKey: ['listing-stats'] });
+      setDeletingListing(null);
+    },
+  });
+
+  const handleEdit = useCallback((listing: Listing) => setEditingListing(listing), []);
+  const handleDelete = useCallback((listing: Listing) => setDeletingListing(listing), []);
   if (listings.length === 0) {
     return (
       <EmptyState
@@ -89,7 +123,13 @@ export function ListingsView({
                 {expandedId === listing.id && (
                   <tr key={`${listing.id}-detail`}>
                     <td colSpan={7} className="p-0">
-                      <ListingDetail listing={listing} />
+                      <ListingDetail
+                        listing={listing}
+                        canEdit={isAdmin}
+                        canDelete={isUberAdmin}
+                        onEdit={() => handleEdit(listing)}
+                        onDelete={() => handleDelete(listing)}
+                      />
                     </td>
                   </tr>
                 )}
@@ -109,6 +149,31 @@ export function ListingsView({
       <div aria-live="polite" className="sr-only">
         Showing page {currentPage + 1} of {totalPages}
       </div>
+
+      {/* Edit modal */}
+      {editingListing && (
+        <ListingEditModal
+          listing={editingListing}
+          isOpen
+          onClose={() => setEditingListing(null)}
+          onSave={(updates) =>
+            editMutation.mutate({ id: editingListing.id, updates })
+          }
+          isSaving={editMutation.isPending}
+        />
+      )}
+
+      {/* Delete confirmation */}
+      <ConfirmDialog
+        isOpen={deletingListing !== null}
+        title="Delete listing"
+        message={`Delete "${deletingListing?.itemDescription ?? ''}"? This action is a soft delete and can be reversed.`}
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => deletingListing && deleteMutation.mutate(deletingListing.id)}
+        onCancel={() => setDeletingListing(null)}
+        isLoading={deleteMutation.isPending}
+      />
     </>
   );
 }

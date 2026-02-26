@@ -4,6 +4,7 @@ import com.tradeintel.common.entity.Listing;
 import com.tradeintel.common.entity.NotificationRule;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -29,18 +30,19 @@ public class NotificationDispatcher {
 
     private static final Logger log = LogManager.getLogger(NotificationDispatcher.class);
 
-    private static final String FROM_ADDRESS = "noreply@tradeintel.com";
-
+    private final String fromAddress;
     private final JavaMailSender mailSender;
     private final NotificationRuleRepository ruleRepository;
     private final SimpMessagingTemplate messagingTemplate;
 
     public NotificationDispatcher(JavaMailSender mailSender,
                                   NotificationRuleRepository ruleRepository,
-                                  SimpMessagingTemplate messagingTemplate) {
+                                  SimpMessagingTemplate messagingTemplate,
+                                  @Value("${app.mail.from-address:noreply@tradeintel.com}") String fromAddress) {
         this.mailSender = mailSender;
         this.ruleRepository = ruleRepository;
         this.messagingTemplate = messagingTemplate;
+        this.fromAddress = fromAddress;
     }
 
     /**
@@ -60,7 +62,7 @@ public class NotificationDispatcher {
 
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(FROM_ADDRESS);
+            message.setFrom(fromAddress);
             message.setTo(email);
             message.setSubject(buildSubject(listing));
             message.setText(buildBody(rule, listing));

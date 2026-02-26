@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Pencil, Trash2 } from 'lucide-react';
 import type { Listing } from '../../types/listing';
 import { Badge } from '../common/Badge';
 
@@ -33,11 +34,39 @@ function DetailField({
 
 interface ListingDetailProps {
   listing: Listing;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-export function ListingDetail({ listing }: ListingDetailProps) {
+export function ListingDetail({ listing, canEdit, canDelete, onEdit, onDelete }: ListingDetailProps) {
   return (
     <div className="bg-gray-50 border-t border-gray-200 px-6 py-4">
+      {/* Admin actions */}
+      {(canEdit || canDelete) && (
+        <div className="flex justify-end gap-2 mb-3">
+          {canEdit && (
+            <button
+              onClick={onEdit}
+              className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              Edit
+            </button>
+          )}
+          {canDelete && (
+            <button
+              onClick={onDelete}
+              className="flex items-center gap-1.5 rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+              Delete
+            </button>
+          )}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-y-3 gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
         <div className="sm:col-span-2 lg:col-span-3">
           <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
