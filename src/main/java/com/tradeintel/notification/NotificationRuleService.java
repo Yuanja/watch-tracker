@@ -69,7 +69,7 @@ public class NotificationRuleService {
     public NotificationRuleDTO createRule(User user, String nlRule, String notifyEmail) {
         log.info("Creating notification rule for user={}: '{}'", user.getId(), nlRule);
 
-        ParsedRule parsed = nlRuleParser.parse(nlRule);
+        ParsedRule parsed = nlRuleParser.parse(nlRule, user);
 
         NotificationRule rule = new NotificationRule();
         rule.setUser(user);
@@ -122,7 +122,7 @@ public class NotificationRuleService {
 
         if (nlRuleChanged) {
             log.info("Re-parsing notification rule id={} with updated text", ruleId);
-            ParsedRule parsed = nlRuleParser.parse(rule.getNlRule());
+            ParsedRule parsed = nlRuleParser.parse(rule.getNlRule(), rule.getUser());
             applyParsedFields(rule, parsed);
         }
 

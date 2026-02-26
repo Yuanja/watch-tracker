@@ -6,18 +6,16 @@ import React, {
   useState,
   useCallback,
 } from 'react';
+import { Client } from '@stomp/stompjs';
+import type { IMessage } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 import { getAuthToken } from '../api/client';
 
 type WebSocketStatus = 'connecting' | 'connected' | 'disconnected' | 'error';
 
-interface WebSocketMessage {
-  type: string;
-  payload: unknown;
-}
-
 interface WebSocketContextValue {
   status: WebSocketStatus;
-  subscribe: (type: string, handler: (payload: unknown) => void) => () => void;
+  subscribe: (destination: string, handler: (payload: unknown) => void) => () => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextValue | null>(null);
@@ -27,91 +25,105 @@ interface WebSocketProviderProps {
 }
 
 const WS_RECONNECT_DELAY_MS = 3000;
-const WS_URL = '/ws';
 
 export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const [status, setStatus] = useState<WebSocketStatus>('disconnected');
-  const wsRef = useRef<WebSocket | null>(null);
+  const clientRef = useRef<Client | null>(null);
   const handlersRef = useRef<Map<string, Set<(payload: unknown) => void>>>(
     new Map()
   );
-  const reconnectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(true);
-
-  const connect = useCallback(() => {
-    const token = getAuthToken();
-    if (!token) return;
-
-    // Build WebSocket URL with token as query param
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const url = `${protocol}//${window.location.host}${WS_URL}?token=${token}`;
-
-    setStatus('connecting');
-    const ws = new WebSocket(url);
-    wsRef.current = ws;
-
-    ws.onopen = () => {
-      if (mountedRef.current) {
-        setStatus('connected');
-      }
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const message: WebSocketMessage = JSON.parse(event.data as string);
-        const handlers = handlersRef.current.get(message.type);
-        if (handlers) {
-          handlers.forEach((handler) => handler(message.payload));
-        }
-      } catch {
-        // Ignore malformed messages
-      }
-    };
-
-    ws.onerror = () => {
-      if (mountedRef.current) {
-        setStatus('error');
-      }
-    };
-
-    ws.onclose = () => {
-      if (mountedRef.current) {
-        setStatus('disconnected');
-        // Attempt reconnect after delay
-        reconnectTimerRef.current = setTimeout(() => {
-          if (mountedRef.current) {
-            connect();
-          }
-        }, WS_RECONNECT_DELAY_MS);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     mountedRef.current = true;
-    connect();
+    const token = getAuthToken();
+    if (!token) return;
+
+    const stompClient = new Client({
+      webSocketFactory: () => new SockJS(`/ws?token=${token}`),
+      reconnectDelay: WS_RECONNECT_DELAY_MS,
+      onConnect: () => {
+        if (mountedRef.current) {
+          setStatus('connected');
+        }
+        // Re-subscribe existing handlers after reconnect
+        handlersRef.current.forEach((_handlers, destination) => {
+          stompClient.subscribe(destination, (message: IMessage) => {
+            try {
+              const body = JSON.parse(message.body);
+              const destHandlers = handlersRef.current.get(destination);
+              if (destHandlers) {
+                destHandlers.forEach((handler) => handler(body));
+              }
+            } catch {
+              // Ignore malformed messages
+            }
+          });
+        });
+      },
+      onDisconnect: () => {
+        if (mountedRef.current) {
+          setStatus('disconnected');
+        }
+      },
+      onStompError: () => {
+        if (mountedRef.current) {
+          setStatus('error');
+        }
+      },
+      onWebSocketClose: () => {
+        if (mountedRef.current) {
+          setStatus('disconnected');
+        }
+      },
+    });
+
+    setStatus('connecting');
+    clientRef.current = stompClient;
+    stompClient.activate();
 
     return () => {
       mountedRef.current = false;
-      if (reconnectTimerRef.current) {
-        clearTimeout(reconnectTimerRef.current);
+      if (stompClient.active) {
+        stompClient.deactivate();
       }
-      if (wsRef.current) {
-        wsRef.current.close();
-        wsRef.current = null;
-      }
+      clientRef.current = null;
     };
-  }, [connect]);
+  }, []);
 
   const subscribe = useCallback(
-    (type: string, handler: (payload: unknown) => void): (() => void) => {
-      if (!handlersRef.current.has(type)) {
-        handlersRef.current.set(type, new Set());
+    (destination: string, handler: (payload: unknown) => void): (() => void) => {
+      if (!handlersRef.current.has(destination)) {
+        handlersRef.current.set(destination, new Set());
       }
-      handlersRef.current.get(type)!.add(handler);
+      handlersRef.current.get(destination)!.add(handler);
+
+      // If already connected, subscribe immediately
+      const client = clientRef.current;
+      let stompSub: { unsubscribe: () => void } | null = null;
+
+      if (client && client.connected) {
+        stompSub = client.subscribe(destination, (message: IMessage) => {
+          try {
+            const body = JSON.parse(message.body);
+            const destHandlers = handlersRef.current.get(destination);
+            if (destHandlers) {
+              destHandlers.forEach((h) => h(body));
+            }
+          } catch {
+            // Ignore malformed messages
+          }
+        });
+      }
 
       return () => {
-        handlersRef.current.get(type)?.delete(handler);
+        handlersRef.current.get(destination)?.delete(handler);
+        if (handlersRef.current.get(destination)?.size === 0) {
+          handlersRef.current.delete(destination);
+        }
+        if (stompSub) {
+          stompSub.unsubscribe();
+        }
       };
     },
     []

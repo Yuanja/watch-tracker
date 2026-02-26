@@ -93,8 +93,10 @@ public class LLMExtractionService {
             );
 
             String content = response.content();
-            log.debug("LLM extraction response ({} input tokens, {} output tokens): {}",
-                    response.inputTokens(), response.outputTokens(),
+            log.info("LLM extraction: model={}, inputTokens={}, outputTokens={}, estimatedCost={}",
+                    extractionModel, response.inputTokens(), response.outputTokens(),
+                    String.format("$%.6f", response.estimateCost()));
+            log.debug("LLM extraction response content: {}",
                     content.length() > 200 ? content.substring(0, 200) + "..." : content);
 
             return parseResponse(content);

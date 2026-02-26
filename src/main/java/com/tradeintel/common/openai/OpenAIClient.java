@@ -74,6 +74,10 @@ public class OpenAIClient {
             ResponseEntity<String> response = restTemplate.exchange(EMBEDDING_URL, HttpMethod.POST, entity, String.class);
             JsonNode responseNode = objectMapper.readTree(response.getBody());
 
+            int totalTokens = responseNode.path("usage").path("total_tokens").asInt();
+            log.debug("Embedding generated: model={}, tokens={}, estimatedCost=${}",
+                    model, totalTokens, String.format("%.6f", totalTokens * 0.02 / 1_000_000));
+
             JsonNode embeddingArray = responseNode.path("data").path(0).path("embedding");
             float[] embedding = new float[embeddingArray.size()];
             for (int i = 0; i < embeddingArray.size(); i++) {

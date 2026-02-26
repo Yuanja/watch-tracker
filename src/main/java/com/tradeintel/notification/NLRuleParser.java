@@ -2,6 +2,8 @@ package com.tradeintel.notification;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.tradeintel.chat.CostTrackingService;
+import com.tradeintel.common.entity.User;
 import com.tradeintel.common.openai.OpenAIClient;
 import com.tradeintel.notification.dto.ParsedRule;
 import org.apache.logging.log4j.LogManager;
@@ -29,23 +31,28 @@ public class NLRuleParser {
     private static final Logger log = LogManager.getLogger(NLRuleParser.class);
 
     private final OpenAIClient openAIClient;
+    private final CostTrackingService costTrackingService;
     private final String extractionModel;
     private final String promptTemplate;
 
     public NLRuleParser(OpenAIClient openAIClient,
+                        CostTrackingService costTrackingService,
                         @Value("${app.openai.extraction-model}") String extractionModel) {
         this.openAIClient = openAIClient;
+        this.costTrackingService = costTrackingService;
         this.extractionModel = extractionModel;
         this.promptTemplate = loadPromptTemplate();
     }
 
     /**
-     * Parses a natural language notification rule into structured fields.
+     * Parses a natural language notification rule into structured fields
+     * and tracks the LLM cost against the requesting user.
      *
      * @param nlRule the user's natural language rule description
+     * @param user   the user who triggered the rule parsing (for cost tracking)
      * @return the parsed structured rule
      */
-    public ParsedRule parse(String nlRule) {
+    public ParsedRule parse(String nlRule, User user) {
         String prompt = promptTemplate.replace("%s", nlRule);
 
         List<OpenAIClient.ChatMessage> messages = List.of(
@@ -56,6 +63,18 @@ public class NLRuleParser {
 
         OpenAIClient.ChatCompletionResponse response = openAIClient.chatCompletion(
                 extractionModel, messages, 0.1);
+
+        // Track cost against the requesting user
+        if (user != null) {
+            try {
+                costTrackingService.trackUsage(user, extractionModel,
+                        response.inputTokens(), response.outputTokens(), response.estimateCost());
+                log.debug("Tracked rule parsing cost: user={}, model={}, cost={}",
+                        user.getId(), extractionModel, response.estimateCost());
+            } catch (Exception e) {
+                log.warn("Failed to track rule parsing cost (non-fatal): {}", e.getMessage());
+            }
+        }
 
         return parseResponse(response.content());
     }
