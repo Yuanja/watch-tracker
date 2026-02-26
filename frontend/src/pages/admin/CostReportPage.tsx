@@ -37,6 +37,7 @@ function CostRow({ row }: { row: AllUserCostRow }) {
 
 export function CostReportPage() {
   const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const { data: costs, isLoading, isError } = useQuery({
     queryKey: ['adminCosts'],
     queryFn: getAllCosts,
@@ -45,6 +46,7 @@ export function CostReportPage() {
   async function handleExportCsv() {
     try {
       setIsExporting(true);
+      setExportError(null);
       const blob = await exportCostsCsv();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -53,7 +55,7 @@ export function CostReportPage() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch {
-      // Silently fail - user can retry
+      setExportError('Export failed. Please try again.');
     } finally {
       setIsExporting(false);
     }
@@ -98,6 +100,9 @@ export function CostReportPage() {
             </button>
           )}
         </div>
+        {exportError && (
+          <p className="mt-2 text-xs text-red-600">{exportError}</p>
+        )}
       </div>
 
       {/* Content */}

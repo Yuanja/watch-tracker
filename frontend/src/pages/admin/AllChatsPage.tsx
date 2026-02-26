@@ -23,13 +23,13 @@ export function AllChatsPage() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [page, setPage] = useState(0);
 
-  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
+  const { data: users = [], isLoading: isLoadingUsers, isError: isUsersError } = useQuery({
     queryKey: ['adminUsers'],
     queryFn: getAllUsers,
     staleTime: 60_000,
   });
 
-  const { data: chatsData, isLoading: isLoadingChats } = useQuery<PagedChats>({
+  const { data: chatsData, isLoading: isLoadingChats, isError: isChatsError } = useQuery<PagedChats>({
     queryKey: ['adminUserChats', selectedUserId, page],
     queryFn: () => getUserChats(selectedUserId!, page),
     enabled: selectedUserId !== null,
@@ -51,6 +51,8 @@ export function AllChatsPage() {
           <h2 className="mb-2 text-sm font-medium text-gray-700">Users</h2>
           {isLoadingUsers ? (
             <p className="text-sm text-gray-400">Loading users...</p>
+          ) : isUsersError ? (
+            <p className="text-sm text-red-600">Failed to load users.</p>
           ) : (
             <ul className="space-y-1 overflow-y-auto rounded border border-gray-200 bg-white" style={{ maxHeight: '70vh' }}>
               {users.map((u: User) => (
@@ -80,6 +82,10 @@ export function AllChatsPage() {
           {!selectedUserId ? (
             <div className="flex h-64 items-center justify-center rounded border border-gray-200 bg-white">
               <p className="text-sm text-gray-400">Select a user to view their chat sessions.</p>
+            </div>
+          ) : isChatsError ? (
+            <div className="flex h-64 items-center justify-center rounded border border-red-200 bg-red-50">
+              <p className="text-sm text-red-600">Failed to load chat sessions.</p>
             </div>
           ) : isLoadingChats ? (
             <p className="text-sm text-gray-400">Loading chat sessions...</p>
