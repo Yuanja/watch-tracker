@@ -1,5 +1,6 @@
 package com.tradeintel.review;
 
+import com.tradeintel.admin.AuditService;
 import com.tradeintel.common.entity.Category;
 import com.tradeintel.common.entity.Condition;
 import com.tradeintel.common.entity.IntentType;
@@ -48,19 +49,22 @@ public class ReviewService {
     private final ManufacturerRepository manufacturerRepository;
     private final UnitRepository unitRepository;
     private final ConditionRepository conditionRepository;
+    private final AuditService auditService;
 
     public ReviewService(ReviewQueueItemRepository reviewQueueItemRepository,
                          ListingRepository listingRepository,
                          CategoryRepository categoryRepository,
                          ManufacturerRepository manufacturerRepository,
                          UnitRepository unitRepository,
-                         ConditionRepository conditionRepository) {
+                         ConditionRepository conditionRepository,
+                         AuditService auditService) {
         this.reviewQueueItemRepository = reviewQueueItemRepository;
         this.listingRepository = listingRepository;
         this.categoryRepository = categoryRepository;
         this.manufacturerRepository = manufacturerRepository;
         this.unitRepository = unitRepository;
         this.conditionRepository = conditionRepository;
+        this.auditService = auditService;
     }
 
     // -------------------------------------------------------------------------
@@ -140,6 +144,7 @@ public class ReviewService {
         ReviewQueueItem saved = reviewQueueItemRepository.save(item);
         log.info("Resolved review item {} for listing {} by user {}",
                 id, listing.getId(), resolver.getId());
+        auditService.log(resolver.getId(), "review.resolve", "ReviewQueueItem", id, null, null, null);
         return ReviewItemDTO.fromEntity(saved);
     }
 
@@ -170,6 +175,7 @@ public class ReviewService {
 
         ReviewQueueItem saved = reviewQueueItemRepository.save(item);
         log.info("Skipped review item {} by user {}", id, resolver.getId());
+        auditService.log(resolver.getId(), "review.skip", "ReviewQueueItem", id, null, null, null);
         return ReviewItemDTO.fromEntity(saved);
     }
 

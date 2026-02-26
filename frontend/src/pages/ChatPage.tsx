@@ -64,7 +64,7 @@ export function ChatPage() {
   // Send message mutation
   const sendMutation = useMutation({
     mutationFn: ({ sessionId, content }: { sessionId: string; content: string }) =>
-      sendMessage(sessionId, { content }),
+      sendMessage(sessionId, { message: content }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({
         queryKey: ['chatMessages', variables.sessionId],

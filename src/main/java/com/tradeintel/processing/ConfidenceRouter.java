@@ -1,5 +1,6 @@
 package com.tradeintel.processing;
 
+import com.tradeintel.archive.EmbeddingService;
 import com.tradeintel.common.entity.Category;
 import com.tradeintel.common.entity.Condition;
 import com.tradeintel.common.entity.IntentType;
@@ -50,6 +51,7 @@ public class ConfidenceRouter {
     private final ManufacturerRepository manufacturerRepository;
     private final UnitRepository unitRepository;
     private final ConditionRepository conditionRepository;
+    private final EmbeddingService embeddingService;
 
     private final double autoThreshold;
     private final double reviewThreshold;
@@ -60,6 +62,7 @@ public class ConfidenceRouter {
                             ManufacturerRepository manufacturerRepository,
                             UnitRepository unitRepository,
                             ConditionRepository conditionRepository,
+                            EmbeddingService embeddingService,
                             @Value("${app.processing.confidence-auto-threshold}") double autoThreshold,
                             @Value("${app.processing.confidence-review-threshold}") double reviewThreshold,
                             @Value("${app.processing.listing-expiry-days}") int expiryDays) {
@@ -68,6 +71,7 @@ public class ConfidenceRouter {
         this.manufacturerRepository = manufacturerRepository;
         this.unitRepository = unitRepository;
         this.conditionRepository = conditionRepository;
+        this.embeddingService = embeddingService;
         this.autoThreshold = autoThreshold;
         this.reviewThreshold = reviewThreshold;
         this.expiryDays = expiryDays;
@@ -153,6 +157,19 @@ public class ConfidenceRouter {
             listing.setExpiresAt(OffsetDateTime.now().plusDays(expiryDays));
 
             Listing saved = listingRepository.save(listing);
+
+            // Generate embedding for semantic search
+            try {
+                float[] embedding = embeddingService.embed(description);
+                if (embedding != null) {
+                    saved.setEmbedding(embedding);
+                    listingRepository.save(saved);
+                }
+            } catch (Exception e) {
+                log.warn("Embedding generation failed for listing {} (non-fatal): {}",
+                        saved.getId(), e.getMessage());
+            }
+
             created.add(saved);
         }
 

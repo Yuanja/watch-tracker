@@ -13,6 +13,7 @@ import com.tradeintel.common.entity.User;
 import com.tradeintel.common.entity.UserRole;
 import com.tradeintel.common.entity.WhatsappGroup;
 import com.tradeintel.listing.ListingRepository;
+import com.tradeintel.listing.ListingService;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterEach;
@@ -26,9 +27,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -75,6 +78,9 @@ class ListingControllerTest {
 
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
+
+    @Autowired
+    private ListingService listingService;
 
     @Autowired
     private TestDatabaseCleaner dbCleaner;
@@ -314,5 +320,75 @@ class ListingControllerTest {
                 .andExpect(status().isForbidden());
 
         log.info("Verified admin (non-uber) cannot delete listings (403)");
+    }
+
+    // =========================================================================
+    // GET /api/listings?q= — keyword search
+    // =========================================================================
+
+    @Test
+    @DisplayName("GET /api/listings?q=parker returns listings matching keyword")
+    void listListings_keywordSearch_returnsMatches() throws Exception {
+        String auth = TestHelper.bearerHeader(jwtTokenProvider, regularUser);
+
+        mockMvc.perform(get("/api/listings")
+                        .param("q", "parker")
+                        .header("Authorization", auth)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements", equalTo(1)));
+
+        log.info("Verified keyword search q=parker returns 1 result");
+    }
+
+    @Test
+    @DisplayName("GET /api/listings?q=nonexistent returns empty results")
+    void listListings_keywordSearch_noMatch_returnsEmpty() throws Exception {
+        String auth = TestHelper.bearerHeader(jwtTokenProvider, regularUser);
+
+        mockMvc.perform(get("/api/listings")
+                        .param("q", "nonexistent_xyz")
+                        .header("Authorization", auth)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements", equalTo(0)));
+
+        log.info("Verified keyword search q=nonexistent returns 0 results");
+    }
+
+    // =========================================================================
+    // Listing expiry scheduled task
+    // =========================================================================
+
+    @Test
+    @DisplayName("expireListings transitions expired active listings to expired status")
+    void expireListings_expiresOldListings() {
+        // Set the seeded listing to have expired yesterday
+        seededListing.setExpiresAt(OffsetDateTime.now().minusDays(1));
+        listingRepository.save(seededListing);
+
+        // Run the scheduled expiry
+        listingService.expireListings();
+
+        // Verify the listing is now expired
+        Listing reloaded = listingRepository.findById(seededListing.getId()).orElseThrow();
+        assertThat(reloaded.getStatus()).isEqualTo(ListingStatus.expired);
+        log.info("Verified listing expiry scheduler transitions old listings to expired");
+    }
+
+    @Test
+    @DisplayName("expireListings does not expire listings with future expiry date")
+    void expireListings_leavesNonExpiredListings() {
+        // Set the seeded listing to expire in 30 days
+        seededListing.setExpiresAt(OffsetDateTime.now().plusDays(30));
+        listingRepository.save(seededListing);
+
+        // Run the scheduled expiry
+        listingService.expireListings();
+
+        // Verify the listing remains active
+        Listing reloaded = listingRepository.findById(seededListing.getId()).orElseThrow();
+        assertThat(reloaded.getStatus()).isEqualTo(ListingStatus.active);
+        log.info("Verified listing expiry scheduler leaves future-dated listings active");
     }
 }

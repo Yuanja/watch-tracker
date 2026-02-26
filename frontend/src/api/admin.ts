@@ -66,6 +66,13 @@ export async function getAllCosts(): Promise<AllUserCostRow[]> {
   return response.data;
 }
 
+export async function exportCostsCsv(): Promise<Blob> {
+  const response = await apiClient.get('/admin/costs/export', {
+    responseType: 'blob',
+  });
+  return response.data;
+}
+
 // ---- Audit Log ----
 
 export async function getAuditLog(

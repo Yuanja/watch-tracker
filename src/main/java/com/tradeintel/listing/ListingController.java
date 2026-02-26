@@ -48,9 +48,12 @@ public class ListingController {
     private static final Logger log = LogManager.getLogger(ListingController.class);
 
     private final ListingService listingService;
+    private final ListingSearchService listingSearchService;
 
-    public ListingController(ListingService listingService) {
+    public ListingController(ListingService listingService,
+                             ListingSearchService listingSearchService) {
         this.listingService = listingService;
+        this.listingSearchService = listingSearchService;
     }
 
     // -------------------------------------------------------------------------
@@ -91,10 +94,12 @@ public class ListingController {
             @RequestParam(required = false) OffsetDateTime createdBefore,
             @RequestParam(required = false) com.tradeintel.common.entity.ListingStatus status,
             @RequestParam(name = "q", required = false) String query,
+            @RequestParam(name = "semanticQuery", required = false) String semanticQuery,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
 
-        log.debug("GET /api/listings page={} size={} intent={} q='{}'", page, size, intent, query);
+        log.debug("GET /api/listings page={} size={} intent={} q='{}' semanticQuery='{}'",
+                page, size, intent, query, semanticQuery);
 
         ListingSearchRequest request = new ListingSearchRequest();
         request.setIntent(intent);
@@ -107,8 +112,15 @@ public class ListingController {
         request.setCreatedBefore(createdBefore);
         request.setStatus(status);
         request.setQuery(query);
+        request.setSemanticQuery(semanticQuery);
         request.setPage(page);
         request.setSize(size);
+
+        // Use semantic search service when semanticQuery is provided
+        if (semanticQuery != null && !semanticQuery.isBlank()) {
+            Page<ListingDTO> result = listingSearchService.search(request);
+            return ResponseEntity.ok(result);
+        }
 
         Page<ListingDTO> result = listingService.list(request);
         return ResponseEntity.ok(result);

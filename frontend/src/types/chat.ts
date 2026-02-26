@@ -47,7 +47,7 @@ export interface SendMessageResponse {
 }
 
 export interface SendMessageRequest {
-  content: string;
+  message: string;
 }
 
 export interface CostSummary {

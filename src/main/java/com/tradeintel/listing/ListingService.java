@@ -1,5 +1,6 @@
 package com.tradeintel.listing;
 
+import com.tradeintel.admin.AuditService;
 import com.tradeintel.common.entity.Category;
 import com.tradeintel.common.entity.Condition;
 import com.tradeintel.common.entity.IntentType;
@@ -22,12 +23,14 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Service for listing CRUD, search, and soft-delete operations.
@@ -45,13 +48,16 @@ public class ListingService {
     private final ListingRepository listingRepository;
     private final CategoryRepository categoryRepository;
     private final EntityManager entityManager;
+    private final AuditService auditService;
 
     public ListingService(ListingRepository listingRepository,
                           CategoryRepository categoryRepository,
-                          EntityManager entityManager) {
+                          EntityManager entityManager,
+                          AuditService auditService) {
         this.listingRepository = listingRepository;
         this.categoryRepository = categoryRepository;
         this.entityManager = entityManager;
+        this.auditService = auditService;
     }
 
     // -------------------------------------------------------------------------
@@ -160,6 +166,7 @@ public class ListingService {
 
         Listing saved = listingRepository.save(listing);
         log.info("Updated listing: id={}", saved.getId());
+        auditService.log(null, "listing.update", "Listing", id, null, null, null);
         return ListingDTO.fromEntity(saved);
     }
 
@@ -186,6 +193,7 @@ public class ListingService {
 
         listingRepository.save(listing);
         log.info("Soft-deleted listing: id={}, deletedBy={}", id, deletedByUser.getId());
+        auditService.log(deletedByUser.getId(), "listing.soft_delete", "Listing", id, null, null, null);
     }
 
     // -------------------------------------------------------------------------
@@ -218,5 +226,21 @@ public class ListingService {
 
         log.debug("Stats: total={}", total);
         return new ListingStatsDTO(total, byIntent, byStatus);
+    }
+
+    // -------------------------------------------------------------------------
+    // Scheduled: listing expiry
+    // -------------------------------------------------------------------------
+
+    /**
+     * Periodically expires active listings whose {@code expiresAt} has passed.
+     * Runs every hour.
+     */
+    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)
+    public void expireListings() {
+        int expired = listingRepository.expireListingsBefore(OffsetDateTime.now());
+        if (expired > 0) {
+            log.info("Expired {} listings that passed their expiry date", expired);
+        }
     }
 }

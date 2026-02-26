@@ -14,6 +14,7 @@ import { UserManagementPage } from './pages/admin/UserManagementPage';
 import { AuditLogPage } from './pages/admin/AuditLogPage';
 import { GroupManagementPage } from './pages/admin/GroupManagementPage';
 import { CostReportPage } from './pages/admin/CostReportPage';
+import { AllChatsPage } from './pages/admin/AllChatsPage';
 import { NormalizedValuePage } from './pages/admin/NormalizedValuePage';
 import { JargonPage } from './pages/admin/JargonPage';
 import type { UserRole } from './types/user';
@@ -70,23 +71,6 @@ function RoleGuard({ roles }: RoleGuardProps) {
   return <Outlet />;
 }
 
-/**
- * Placeholder pages for admin-managed sections.
- * These will be replaced by full implementations in later phases.
- */
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <div className="flex h-full items-center justify-center p-8">
-      <div className="text-center">
-        <h1 className="text-xl font-semibold text-gray-900">{title}</h1>
-        <p className="mt-2 text-sm text-gray-500">
-          Implementation coming in a future phase.
-        </p>
-      </div>
-    </div>
-  );
-}
-
 export function App() {
   return (
     <Routes>
@@ -131,10 +115,7 @@ export function App() {
           {/* Uber admin routes (uber_admin only) */}
           <Route element={<RoleGuard roles={['uber_admin']} />}>
             <Route path="/admin/users" element={<UserManagementPage />} />
-            <Route
-              path="/admin/chats"
-              element={<PlaceholderPage title="All Chats" />}
-            />
+            <Route path="/admin/chats" element={<AllChatsPage />} />
             <Route path="/admin/costs" element={<CostReportPage />} />
             <Route path="/admin/audit" element={<AuditLogPage />} />
             <Route path="/admin/groups" element={<GroupManagementPage />} />

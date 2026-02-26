@@ -7,10 +7,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -70,4 +72,15 @@ public interface ListingRepository extends JpaRepository<Listing, UUID>, JpaSpec
            "AND l.status = 'active' " +
            "AND LOWER(l.itemDescription) LIKE LOWER(CONCAT('%', :query, '%'))")
     List<Listing> findByDescriptionContaining(@Param("query") String query, Pageable pageable);
+
+    /**
+     * Bulk-updates active listings whose expiry date has passed to expired status.
+     *
+     * @param now the current timestamp
+     * @return number of listings updated
+     */
+    @Modifying
+    @Query("UPDATE Listing l SET l.status = 'expired' " +
+           "WHERE l.status = 'active' AND l.expiresAt IS NOT NULL AND l.expiresAt < :now")
+    int expireListingsBefore(@Param("now") OffsetDateTime now);
 }
