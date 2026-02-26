@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, Fragment } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Listing } from '../../types/listing';
 import { updateListing, deleteListing } from '../../api/listings';
@@ -136,9 +136,8 @@ export function ListingsView({
           </thead>
           <tbody className="divide-y divide-gray-100">
             {listings.map((listing) => (
-              <>
+              <Fragment key={listing.id}>
                 <ListingCard
-                  key={listing.id}
                   listing={listing}
                   isExpanded={expandedId === listing.id}
                   onToggle={() => onToggleExpand(listing.id)}
@@ -156,7 +155,7 @@ export function ListingsView({
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
