@@ -55,7 +55,7 @@ export interface ListingSearchRequest {
   priceMax?: number;
   dateFrom?: string;
   dateTo?: string;
-  textQuery?: string;
+  q?: string;
   semanticQuery?: string;
   page?: number;
   size?: number;

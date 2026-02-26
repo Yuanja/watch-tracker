@@ -47,7 +47,7 @@ export function ListingsPage() {
   const searchParams: ListingSearchRequest = {
     page,
     size: PAGE_SIZE,
-    ...(textQuery && { textQuery }),
+    ...(textQuery && { q: textQuery }),
     ...(intent && { intent }),
     ...(status && { status: status as ListingStatus }),
     ...(priceMin && { priceMin: parseFloat(priceMin) }),

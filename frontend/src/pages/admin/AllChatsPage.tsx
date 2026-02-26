@@ -31,7 +31,7 @@ export function AllChatsPage() {
 
   const { data: chatsData, isLoading: isLoadingChats } = useQuery<PagedChats>({
     queryKey: ['adminUserChats', selectedUserId, page],
-    queryFn: () => getUserChats(selectedUserId!),
+    queryFn: () => getUserChats(selectedUserId!, page),
     enabled: selectedUserId !== null,
   });
 

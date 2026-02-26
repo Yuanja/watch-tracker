@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { MessageSquare, Plus, Trash2 } from 'lucide-react';
+import { MessageSquare, Plus, Trash2, Pencil, Check, X } from 'lucide-react';
 import {
   getAdminGroups,
   addGroup,
+  updateGroup,
   deleteGroup,
 } from '../../api/admin';
 import type { WhatsappGroup } from '../../types/message';
@@ -128,8 +129,93 @@ function AddGroupForm({ onSuccess, onCancel }: AddGroupFormProps) {
 
 // ---- Group Row ----
 
+function GroupEditRow({ group, onDone }: { group: WhatsappGroup; onDone: () => void }) {
+  const queryClient = useQueryClient();
+  const [groupName, setGroupName] = useState(group.groupName);
+  const [description, setDescription] = useState(group.description ?? '');
+  const [isActive, setIsActive] = useState(group.isActive);
+
+  const mutation = useMutation({
+    mutationFn: () =>
+      updateGroup(group.id, {
+        groupName: groupName.trim(),
+        description: description.trim() || null,
+        isActive,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['adminGroups'] });
+      onDone();
+    },
+  });
+
+  return (
+    <tr className="bg-yellow-50 border-b border-yellow-200">
+      <td colSpan={6} className="px-4 py-3">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            mutation.mutate();
+          }}
+          className="flex flex-wrap items-end gap-3"
+        >
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Name</label>
+            <input
+              type="text"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              className="rounded-md border border-gray-300 px-2.5 py-1.5 text-sm w-44 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-700 mb-1">Description</label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="rounded-md border border-gray-300 px-2.5 py-1.5 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-yellow-500"
+            />
+          </div>
+          <div className="flex items-center gap-2 pb-1">
+            <input
+              id={`active-${group.id}`}
+              type="checkbox"
+              checked={isActive}
+              onChange={(e) => setIsActive(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
+            />
+            <label htmlFor={`active-${group.id}`} className="text-xs font-medium text-gray-700">
+              Active
+            </label>
+          </div>
+          <div className="flex gap-2 pb-1">
+            <button
+              type="submit"
+              disabled={mutation.isPending}
+              className="flex items-center gap-1 rounded-md bg-yellow-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-yellow-700 disabled:opacity-50"
+            >
+              <Check className="h-3.5 w-3.5" />
+              {mutation.isPending ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              type="button"
+              onClick={onDone}
+              disabled={mutation.isPending}
+              className="flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <X className="h-3.5 w-3.5" />
+              Cancel
+            </button>
+          </div>
+        </form>
+      </td>
+    </tr>
+  );
+}
+
 function GroupRow({ group }: { group: WhatsappGroup }) {
   const queryClient = useQueryClient();
+  const [isEditing, setIsEditing] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const deleteMutation = useMutation({
@@ -139,6 +225,10 @@ function GroupRow({ group }: { group: WhatsappGroup }) {
       setDeleteTarget(null);
     },
   });
+
+  if (isEditing) {
+    return <GroupEditRow group={group} onDone={() => setIsEditing(false)} />;
+  }
 
   return (
     <>
@@ -183,13 +273,22 @@ function GroupRow({ group }: { group: WhatsappGroup }) {
             : '—'}
         </td>
         <td className="px-4 py-3">
-          <button
-            onClick={() => setDeleteTarget(group.id)}
-            title="Remove group"
-            className="rounded-md p-1.5 text-gray-400 hover:text-red-600"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setIsEditing(true)}
+              title="Edit group"
+              className="rounded-md p-1.5 text-gray-400 hover:text-blue-600"
+            >
+              <Pencil className="h-4 w-4" />
+            </button>
+            <button
+              onClick={() => setDeleteTarget(group.id)}
+              title="Remove group"
+              className="rounded-md p-1.5 text-gray-400 hover:text-red-600"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </div>
         </td>
       </tr>
 

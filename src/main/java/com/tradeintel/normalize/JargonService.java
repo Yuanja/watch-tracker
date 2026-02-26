@@ -7,6 +7,8 @@ import com.tradeintel.normalize.dto.JargonEntryDTO;
 import com.tradeintel.normalize.dto.JargonUpdateRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -79,6 +81,7 @@ public class JargonService {
      * @return the created entry as a DTO
      * @throws IllegalArgumentException if an entry with the same acronym already exists
      */
+    @CacheEvict(value = "jargon", allEntries = true)
     public JargonEntryDTO create(JargonCreateRequest request) {
         String acronym = request.getAcronym().trim();
 
@@ -116,6 +119,7 @@ public class JargonService {
      * @return the updated entry as a DTO
      * @throws ResourceNotFoundException if no entry with the given id exists
      */
+    @CacheEvict(value = "jargon", allEntries = true)
     public JargonEntryDTO update(UUID id, JargonUpdateRequest request) {
         JargonEntry entry = jargonRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("JargonEntry", id));
@@ -152,6 +156,7 @@ public class JargonService {
      * @return the verified entry as a DTO
      * @throws ResourceNotFoundException if no entry with the given id exists
      */
+    @CacheEvict(value = "jargon", allEntries = true)
     public JargonEntryDTO verify(UUID id) {
         JargonEntry entry = jargonRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("JargonEntry", id));
@@ -174,6 +179,7 @@ public class JargonService {
      * @param id the UUID of the entry to delete
      * @throws ResourceNotFoundException if no entry with the given id exists
      */
+    @CacheEvict(value = "jargon", allEntries = true)
     public void delete(UUID id) {
         JargonEntry entry = jargonRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("JargonEntry", id));
@@ -193,6 +199,7 @@ public class JargonService {
      *
      * @return newline-delimited CSV string, or an empty string if no verified entries exist
      */
+    @Cacheable("jargon")
     @Transactional(readOnly = true)
     public String getVerifiedAsCSV() {
         List<JargonEntry> verified = jargonRepository.findByVerifiedTrueOrderByAcronymAsc();
@@ -223,6 +230,7 @@ public class JargonService {
      * @return list of newly created (unverified) {@link JargonEntryDTO}s — existing
      *         entries that were only incremented are excluded from the result
      */
+    @CacheEvict(value = "jargon", allEntries = true)
     public List<JargonEntryDTO> learnNewTerms(List<String> terms) {
         List<JargonEntryDTO> created = new ArrayList<>();
 

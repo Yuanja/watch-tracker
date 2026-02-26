@@ -29,8 +29,9 @@ export interface AllUserCostRow {
 // ---- User Management ----
 
 export async function getAllUsers(): Promise<User[]> {
-  const response = await apiClient.get<User[]>('/admin/users');
-  return response.data;
+  const response = await apiClient.get('/admin/users', { params: { size: 1000 } });
+  // Backend returns Page<UserDTO>; unwrap .content array
+  return response.data.content ?? response.data;
 }
 
 export async function updateUserRole(
@@ -49,13 +50,15 @@ export async function setUserActive(
 ): Promise<User> {
   const response = await apiClient.put<User>(
     `/admin/users/${userId}/active`,
-    { isActive }
+    { active: isActive }
   );
   return response.data;
 }
 
-export async function getUserChats(userId: string) {
-  const response = await apiClient.get(`/admin/users/${userId}/chats`);
+export async function getUserChats(userId: string, page = 0, size = 20) {
+  const response = await apiClient.get(`/admin/users/${userId}/chats`, {
+    params: { page, size },
+  });
   return response.data;
 }
 

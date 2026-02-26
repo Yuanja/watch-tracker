@@ -132,8 +132,9 @@ export async function listJargon(params?: {
   search?: string;
   verified?: boolean;
 }): Promise<JargonEntry[]> {
-  const response = await apiClient.get<JargonEntry[]>('/jargon', { params });
-  return response.data;
+  const response = await apiClient.get('/jargon', { params: { ...params, size: 1000 } });
+  // Backend returns Page<JargonEntryDTO>; unwrap .content array
+  return response.data.content ?? response.data;
 }
 
 export async function createJargon(
