@@ -173,3 +173,81 @@ test.describe('Cost Page', () => {
     ).toBeVisible();
   });
 });
+
+test.describe('Admin Pages (admin+)', () => {
+  test('review queue loads for admin', async ({ page }) => {
+    await setupAuth(page, 'admin');
+    await page.goto('/review');
+
+    await expect(
+      page.getByRole('heading', { name: /Review Queue/i })
+    ).toBeVisible();
+  });
+
+  test('categories admin page loads', async ({ page }) => {
+    await setupAuth(page, 'admin');
+    await page.goto('/admin/categories');
+
+    await expect(page.getByRole('heading', { name: 'Categories' })).toBeVisible();
+  });
+
+  test('manufacturers admin page loads', async ({ page }) => {
+    await setupAuth(page, 'admin');
+    await page.goto('/admin/manufacturers');
+
+    await expect(page.getByRole('heading', { name: 'Manufacturers' })).toBeVisible();
+  });
+
+  test('jargon admin page loads', async ({ page }) => {
+    await setupAuth(page, 'admin');
+    await page.goto('/admin/jargon');
+
+    await expect(page.getByRole('heading', { name: 'Jargon' })).toBeVisible();
+  });
+
+  test('regular user is denied access to review queue', async ({ page }) => {
+    await setupAuth(page, 'user');
+    await page.goto('/review');
+
+    // Should redirect away from /review since user lacks admin role
+    await expect(page).not.toHaveURL(/\/review/);
+  });
+});
+
+test.describe('Uber Admin Pages', () => {
+  test('user management page loads', async ({ page }) => {
+    await setupAuth(page, 'uber_admin');
+    await page.goto('/admin/users');
+
+    await expect(page.getByText('User Management')).toBeVisible();
+  });
+
+  test('audit log page loads', async ({ page }) => {
+    await setupAuth(page, 'uber_admin');
+    await page.goto('/admin/audit');
+
+    await expect(page.getByRole('heading', { name: 'Audit Log' })).toBeVisible();
+  });
+
+  test('cost report page loads', async ({ page }) => {
+    await setupAuth(page, 'uber_admin');
+    await page.goto('/admin/costs');
+
+    await expect(page.getByRole('heading', { name: 'Cost Report' })).toBeVisible();
+  });
+
+  test('group management page loads', async ({ page }) => {
+    await setupAuth(page, 'uber_admin');
+    await page.goto('/admin/groups');
+
+    await expect(page.getByRole('heading', { name: 'WhatsApp Groups' })).toBeVisible();
+  });
+
+  test('admin user is denied access to uber admin pages', async ({ page }) => {
+    await setupAuth(page, 'admin');
+    await page.goto('/admin/users');
+
+    // Should redirect away since admin lacks uber_admin role
+    await expect(page).not.toHaveURL(/\/admin\/users/);
+  });
+});
