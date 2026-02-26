@@ -103,7 +103,7 @@ public class ReplayController {
         }
 
         Page<ReplayMessageDTO> dtos = messageSearchService.searchByFilters(
-                groupId, sender, null, null, page, size);
+                groupId, q, sender, null, null, page, size);
         return ResponseEntity.ok(dtos);
     }
 }

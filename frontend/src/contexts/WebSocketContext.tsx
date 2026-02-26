@@ -27,7 +27,7 @@ interface WebSocketProviderProps {
 }
 
 const WS_RECONNECT_DELAY_MS = 3000;
-const WS_URL = '/ws/trade-intel';
+const WS_URL = '/ws';
 
 export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const [status, setStatus] = useState<WebSocketStatus>('disconnected');

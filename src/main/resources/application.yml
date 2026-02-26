@@ -22,6 +22,18 @@ spring:
             client-secret: ${GOOGLE_CLIENT_SECRET:placeholder}
             scope: openid, email, profile
 
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 server:
   port: 8080
 

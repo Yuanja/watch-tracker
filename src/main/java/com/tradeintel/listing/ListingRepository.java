@@ -8,16 +8,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
  * Spring Data JPA repository for {@link Listing} entities.
  *
  * <p>Extends {@link JpaSpecificationExecutor} to support dynamic criteria queries
- * used by the filtered search endpoint. Semantic (pgvector) search will be added
- * in Phase 3 via native queries.</p>
+ * used by the filtered search endpoint. Semantic (pgvector) search is supported
+ * via native queries for cosine similarity ordering.</p>
  */
 @Repository
 public interface ListingRepository extends JpaRepository<Listing, UUID>, JpaSpecificationExecutor<Listing> {
@@ -57,5 +59,15 @@ public interface ListingRepository extends JpaRepository<Listing, UUID>, JpaSpec
      * @return count of non-soft-deleted listings with the given status
      */
     @Query("SELECT COUNT(l) FROM Listing l WHERE l.status = :status AND l.deletedAt IS NULL")
-    long countByStatusAndNotDeleted(ListingStatus status);
+    long countByStatusAndNotDeleted(@Param("status") ListingStatus status);
+
+    /**
+     * Returns non-deleted active listings that have embeddings, ordered by
+     * keyword match on description or part number. Used as a fallback when
+     * pgvector is not available (e.g., H2 in tests).
+     */
+    @Query("SELECT l FROM Listing l WHERE l.deletedAt IS NULL " +
+           "AND l.status = 'active' " +
+           "AND LOWER(l.itemDescription) LIKE LOWER(CONCAT('%', :query, '%'))")
+    List<Listing> findByDescriptionContaining(@Param("query") String query, Pageable pageable);
 }

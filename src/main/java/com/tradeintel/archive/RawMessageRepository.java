@@ -34,6 +34,25 @@ public interface RawMessageRepository extends JpaRepository<RawMessage, UUID> {
             @Param("dateTo") OffsetDateTime dateTo,
             Pageable pageable);
 
+    @Query("SELECT m FROM RawMessage m WHERE m.group.id = :groupId " +
+           "AND (:textQuery IS NULL OR LOWER(m.messageBody) LIKE LOWER(CONCAT('%', :textQuery, '%'))) " +
+           "AND (:senderName IS NULL OR LOWER(m.senderName) LIKE LOWER(CONCAT('%', :senderName, '%'))) " +
+           "AND (:dateFrom IS NULL OR m.timestampWa >= :dateFrom) " +
+           "AND (:dateTo IS NULL OR m.timestampWa <= :dateTo) " +
+           "ORDER BY m.timestampWa DESC")
+    Page<RawMessage> findByGroupIdWithTextAndFilters(
+            @Param("groupId") UUID groupId,
+            @Param("textQuery") String textQuery,
+            @Param("senderName") String senderName,
+            @Param("dateFrom") OffsetDateTime dateFrom,
+            @Param("dateTo") OffsetDateTime dateTo,
+            Pageable pageable);
+
+    @Query("SELECT m FROM RawMessage m " +
+           "WHERE (:textQuery IS NULL OR LOWER(m.messageBody) LIKE LOWER(CONCAT('%', :textQuery, '%'))) " +
+           "ORDER BY m.timestampWa DESC")
+    Page<RawMessage> findByTextQuery(@Param("textQuery") String textQuery, Pageable pageable);
+
     @Query("SELECT m FROM RawMessage m WHERE m.processed = false ORDER BY m.receivedAt ASC")
     Page<RawMessage> findUnprocessed(Pageable pageable);
 }

@@ -22,6 +22,9 @@ spring:
     show-sql: false
     # Ensure Spring SQL init runs before JPA validates the schema.
     defer-datasource-initialization: true
+  mail:
+    host: localhost
+    port: 25
   flyway:
     enabled: false
   security:

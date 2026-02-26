@@ -2,6 +2,7 @@ package com.tradeintel.processing;
 
 import com.tradeintel.common.entity.Listing;
 import com.tradeintel.common.entity.NotificationRule;
+import com.tradeintel.notification.NotificationDispatcher;
 import com.tradeintel.notification.NotificationRuleRepository;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,9 +32,8 @@ import java.util.UUID;
  * <p>All specified criteria must match (AND logic). Criteria that are null/empty
  * on the rule are considered to match any listing.</p>
  *
- * <p>Currently, matched notifications are logged for dispatch in Phase 4.
- * Actual email delivery will be implemented when the notification dispatch
- * service is built.</p>
+ * <p>When a match is found, the {@link NotificationDispatcher} is invoked to send
+ * an email notification to the rule's owner.</p>
  */
 @Service
 public class NotificationMatcher {
@@ -41,14 +41,17 @@ public class NotificationMatcher {
     private static final Logger log = LogManager.getLogger(NotificationMatcher.class);
 
     private final NotificationRuleRepository notificationRuleRepository;
+    private final NotificationDispatcher notificationDispatcher;
 
-    public NotificationMatcher(NotificationRuleRepository notificationRuleRepository) {
+    public NotificationMatcher(NotificationRuleRepository notificationRuleRepository,
+                               NotificationDispatcher notificationDispatcher) {
         this.notificationRuleRepository = notificationRuleRepository;
+        this.notificationDispatcher = notificationDispatcher;
     }
 
     /**
      * Evaluates the given listing against all active notification rules and
-     * logs matches for future dispatch.
+     * dispatches email notifications for matches.
      *
      * @param listing the newly created active listing to match against rules
      */
@@ -71,13 +74,15 @@ public class NotificationMatcher {
         for (NotificationRule rule : activeRules) {
             if (matches(rule, listing)) {
                 matchCount++;
-                log.info("Notification rule {} (user={}) matched listing {} - '{}' [dispatch pending Phase 4]",
+                log.info("Notification rule {} (user={}) matched listing {} - '{}'",
                         rule.getId(),
                         rule.getUser().getId(),
                         listing.getId(),
                         listing.getItemDescription().length() > 80
                                 ? listing.getItemDescription().substring(0, 80) + "..."
                                 : listing.getItemDescription());
+
+                notificationDispatcher.dispatch(rule, listing);
             }
         }
 

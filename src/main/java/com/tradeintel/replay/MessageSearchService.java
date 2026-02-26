@@ -21,12 +21,12 @@ import java.util.stream.Collectors;
 
 /**
  * Dedicated search service for archived WhatsApp messages.
- * Supports text search (sender, date range filters) and semantic search
- * (vector similarity via {@link EmbeddingService}).
+ * Supports text search (keyword ILIKE on message body, sender, date range filters)
+ * and semantic search (vector similarity via {@link EmbeddingService}).
  *
- * <p>Text search uses database-level filtering with ILIKE patterns.
- * Semantic search generates an embedding for the query text and would
- * use pgvector cosine similarity ordering in production.</p>
+ * <p>Text search uses database-level filtering with ILIKE patterns on the message body.
+ * Semantic search generates an embedding for the query text and would use pgvector
+ * cosine similarity ordering against a real PostgreSQL data source.</p>
  */
 @Service
 @Transactional(readOnly = true)
@@ -47,9 +47,10 @@ public class MessageSearchService {
     }
 
     /**
-     * Searches messages within a group using text filters (sender, date range).
+     * Searches messages within a group using text query and filters (sender, date range).
      *
      * @param groupId    the group to search within
+     * @param textQuery  optional text search on message body (ILIKE)
      * @param senderName optional sender name filter (ILIKE)
      * @param dateFrom   optional start date filter
      * @param dateTo     optional end date filter
@@ -57,7 +58,8 @@ public class MessageSearchService {
      * @param size       page size
      * @return page of matching messages as DTOs
      */
-    public Page<ReplayMessageDTO> searchByFilters(UUID groupId, String senderName,
+    public Page<ReplayMessageDTO> searchByFilters(UUID groupId, String textQuery,
+                                                   String senderName,
                                                    OffsetDateTime dateFrom,
                                                    OffsetDateTime dateTo,
                                                    int page, int size) {
@@ -67,19 +69,20 @@ public class MessageSearchService {
         }
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<RawMessage> messages = rawMessageRepository.findByGroupIdWithFilters(
-                groupId, senderName, dateFrom, dateTo, pageable);
+        Page<RawMessage> messages = rawMessageRepository.findByGroupIdWithTextAndFilters(
+                groupId, textQuery, senderName, dateFrom, dateTo, pageable);
 
         String groupName = group.getGroupName();
-        log.debug("Message text search: groupId={}, results={}", groupId, messages.getTotalElements());
+        log.debug("Message search: groupId={}, textQuery='{}', results={}",
+                groupId, textQuery, messages.getTotalElements());
         return messages.map(msg -> ReplayMessageDTO.fromEntity(msg, groupName));
     }
 
     /**
-     * Searches messages across all groups with optional text and semantic modes.
+     * Searches messages across all groups with optional text search.
      *
      * @param textQuery     text search keyword (ILIKE on message body)
-     * @param semanticQuery natural language query for semantic similarity
+     * @param semanticQuery natural language query for semantic similarity (future pgvector)
      * @param page          zero-based page index
      * @param size          page size
      * @return page of matching messages as DTOs
@@ -92,7 +95,13 @@ public class MessageSearchService {
         Map<UUID, String> groupNames = groupRepository.findAll().stream()
                 .collect(Collectors.toMap(WhatsappGroup::getId, WhatsappGroup::getGroupName));
 
-        Page<RawMessage> messages = rawMessageRepository.findAll(pageable);
+        Page<RawMessage> messages;
+
+        if (textQuery != null && !textQuery.isBlank()) {
+            messages = rawMessageRepository.findByTextQuery(textQuery.trim(), pageable);
+        } else {
+            messages = rawMessageRepository.findAll(pageable);
+        }
 
         log.debug("Message search: textQuery='{}', semanticQuery='{}', results={}",
                 textQuery, semanticQuery, messages.getTotalElements());

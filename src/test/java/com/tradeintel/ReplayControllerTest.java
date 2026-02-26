@@ -284,6 +284,79 @@ class ReplayControllerTest {
     }
 
     @Test
+    @DisplayName("GET /api/messages/search filters by text query on message body")
+    void searchMessages_withTextQuery_returnsMatchingMessages() throws Exception {
+        String auth    = TestHelper.bearerHeader(jwtTokenProvider, testUser);
+        String groupId = activeGroup.getId().toString();
+
+        mockMvc.perform(get("/api/messages/search")
+                        .param("groupId", groupId)
+                        .param("q",       "valves")
+                        .param("page",    "0")
+                        .param("size",    "10")
+                        .header("Authorization", auth)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements", equalTo(1)))
+                .andExpect(jsonPath("$.content[0].senderName", equalTo("Alice")));
+
+        log.info("Verified search filtered by q=valves returns 1 result");
+    }
+
+    @Test
+    @DisplayName("GET /api/messages/search with text query returns no results for non-matching text")
+    void searchMessages_withNonMatchingTextQuery_returnsEmpty() throws Exception {
+        String auth    = TestHelper.bearerHeader(jwtTokenProvider, testUser);
+        String groupId = activeGroup.getId().toString();
+
+        mockMvc.perform(get("/api/messages/search")
+                        .param("groupId", groupId)
+                        .param("q",       "nonexistent_term_xyz")
+                        .param("page",    "0")
+                        .param("size",    "10")
+                        .header("Authorization", auth)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements", equalTo(0)));
+
+        log.info("Verified search with non-matching q returns empty");
+    }
+
+    @Test
+    @DisplayName("GET /api/messages/search combines text query and sender filter")
+    void searchMessages_withTextQueryAndSender_returnsCombinedResults() throws Exception {
+        String auth    = TestHelper.bearerHeader(jwtTokenProvider, testUser);
+        String groupId = activeGroup.getId().toString();
+
+        // Search for "pumps" by Bob - should match
+        mockMvc.perform(get("/api/messages/search")
+                        .param("groupId", groupId)
+                        .param("q",       "pumps")
+                        .param("sender",  "Bob")
+                        .param("page",    "0")
+                        .param("size",    "10")
+                        .header("Authorization", auth)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements", equalTo(1)))
+                .andExpect(jsonPath("$.content[0].senderName", equalTo("Bob")));
+
+        // Search for "valves" by Bob - should not match (Alice sent valves)
+        mockMvc.perform(get("/api/messages/search")
+                        .param("groupId", groupId)
+                        .param("q",       "valves")
+                        .param("sender",  "Bob")
+                        .param("page",    "0")
+                        .param("size",    "10")
+                        .header("Authorization", auth)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements", equalTo(0)));
+
+        log.info("Verified combined text query + sender filter");
+    }
+
+    @Test
     @DisplayName("GET /api/messages/search is rejected for unauthenticated requests (OAuth2 redirect)")
     void searchMessages_unauthenticated_redirectsToLogin() throws Exception {
         mockMvc.perform(get("/api/messages/search")
