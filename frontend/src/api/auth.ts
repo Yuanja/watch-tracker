@@ -15,7 +15,7 @@ export async function getMe(): Promise<User> {
  * redirects back with a JWT token.
  */
 export function loginWithGoogle(): void {
-  window.location.href = '/api/oauth2/authorization/google';
+  window.location.href = '/oauth2/authorization/google';
 }
 
 /**

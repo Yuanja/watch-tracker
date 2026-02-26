@@ -116,13 +116,11 @@ class ReplayControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/messages/groups is rejected for unauthenticated requests (OAuth2 redirect)")
-    void listGroups_unauthenticated_redirectsToLogin() throws Exception {
-        // Spring Security OAuth2 login redirects unauthenticated requests (302) rather than
-        // returning 401. The redirect to the OAuth2 provider is the enforcement mechanism.
+    @DisplayName("GET /api/messages/groups returns 401 for unauthenticated requests")
+    void listGroups_unauthenticated_returns401() throws Exception {
         mockMvc.perform(get("/api/messages/groups")
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isUnauthorized());
     }
 
     // -------------------------------------------------------------------------
@@ -162,13 +160,13 @@ class ReplayControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/messages/groups/{id}/messages is rejected for unauthenticated requests (OAuth2 redirect)")
-    void getGroupMessages_unauthenticated_redirectsToLogin() throws Exception {
+    @DisplayName("GET /api/messages/groups/{id}/messages returns 401 for unauthenticated requests")
+    void getGroupMessages_unauthenticated_returns401() throws Exception {
         String groupId = activeGroup.getId().toString();
 
         mockMvc.perform(get("/api/messages/groups/{groupId}/messages", groupId)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -205,11 +203,11 @@ class ReplayControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/messages is rejected for unauthenticated requests (OAuth2 redirect)")
-    void getMessages_unauthenticated_redirectsToLogin() throws Exception {
+    @DisplayName("GET /api/messages returns 401 for unauthenticated requests")
+    void getMessages_unauthenticated_returns401() throws Exception {
         mockMvc.perform(get("/api/messages")
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isUnauthorized());
     }
 
     // -------------------------------------------------------------------------
@@ -375,12 +373,12 @@ class ReplayControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/messages/search is rejected for unauthenticated requests (OAuth2 redirect)")
-    void searchMessages_unauthenticated_redirectsToLogin() throws Exception {
+    @DisplayName("GET /api/messages/search returns 401 for unauthenticated requests")
+    void searchMessages_unauthenticated_returns401() throws Exception {
         mockMvc.perform(get("/api/messages/search")
                         .param("groupId", activeGroup.getId().toString())
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isUnauthorized());
     }
 
     // -------------------------------------------------------------------------

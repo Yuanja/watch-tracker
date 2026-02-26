@@ -173,11 +173,11 @@ class ListingControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/listings redirects unauthenticated requests (OAuth2)")
-    void listListings_unauthenticated_redirectsToOAuth2() throws Exception {
+    @DisplayName("GET /api/listings returns 401 for unauthenticated requests")
+    void listListings_unauthenticated_returns401() throws Exception {
         mockMvc.perform(get("/api/listings")
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

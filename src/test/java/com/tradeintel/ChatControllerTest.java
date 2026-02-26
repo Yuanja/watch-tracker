@@ -141,12 +141,12 @@ class ChatControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/chat/sessions is rejected for unauthenticated requests")
+    @DisplayName("POST /api/chat/sessions returns 401 for unauthenticated requests")
     void createSession_unauthenticated_isRejected() throws Exception {
         mockMvc.perform(post("/api/chat/sessions")
                         .contentType(MediaType.APPLICATION_JSON)
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isUnauthorized());
     }
 
     // -------------------------------------------------------------------------

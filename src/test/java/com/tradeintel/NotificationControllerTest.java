@@ -148,13 +148,13 @@ class NotificationControllerTest {
     }
 
     @Test
-    @DisplayName("POST /api/notifications is rejected for unauthenticated requests")
-    void createRule_unauthenticated_isRejected() throws Exception {
+    @DisplayName("POST /api/notifications returns 401 for unauthenticated requests")
+    void createRule_unauthenticated_returns401() throws Exception {
         mockMvc.perform(post("/api/notifications")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"nlRule\": \"test\"}")
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isUnauthorized());
     }
 
     // -------------------------------------------------------------------------

@@ -195,11 +195,11 @@ class ReviewControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/review redirects unauthenticated requests")
-    void listPending_unauthenticated_redirects() throws Exception {
+    @DisplayName("GET /api/review returns 401 for unauthenticated requests")
+    void listPending_unauthenticated_returns401() throws Exception {
         mockMvc.perform(get("/api/review")
                         .accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().is3xxRedirection());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
