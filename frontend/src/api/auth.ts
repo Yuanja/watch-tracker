@@ -1,11 +1,6 @@
 import { apiClient } from './client';
 import type { User } from '../types/user';
 
-export interface AuthResponse {
-  token: string;
-  user: User;
-}
-
 /**
  * Fetch the currently authenticated user's profile.
  */
@@ -21,15 +16,6 @@ export async function getMe(): Promise<User> {
  */
 export function loginWithGoogle(): void {
   window.location.href = '/api/oauth2/authorization/google';
-}
-
-/**
- * Exchange an OAuth2 authorization code / callback token for a JWT.
- * Called by the OAuth2 callback handler if using a redirect-based flow.
- */
-export async function exchangeToken(token: string): Promise<AuthResponse> {
-  const response = await apiClient.post<AuthResponse>('/auth/google', { token });
-  return response.data;
 }
 
 /**

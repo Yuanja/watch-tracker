@@ -47,6 +47,7 @@ export interface Listing {
 
 export interface ListingSearchRequest {
   intent?: ListingIntent;
+  status?: ListingStatus;
   categoryId?: string;
   manufacturerId?: string;
   conditionId?: string;

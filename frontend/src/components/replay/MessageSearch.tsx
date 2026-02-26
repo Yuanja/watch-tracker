@@ -28,8 +28,8 @@ export function MessageSearch({
     queryFn: () =>
       searchMessages({
         groupId: groupId ?? undefined,
-        textQuery: mode === 'text' ? debouncedQuery : undefined,
-        semanticQuery: mode === 'semantic' ? debouncedQuery : undefined,
+        q: mode === 'text' ? debouncedQuery : undefined,
+        semantic: mode === 'semantic' ? debouncedQuery : undefined,
         size: 20,
       }),
     enabled: debouncedQuery.trim().length > 2,

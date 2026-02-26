@@ -17,8 +17,6 @@ export async function getGroups(): Promise<WhatsappGroup[]> {
 export interface GetGroupMessagesParams {
   page?: number;
   size?: number;
-  dateFrom?: string;
-  dateTo?: string;
 }
 
 /**

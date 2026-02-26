@@ -44,11 +44,9 @@ export interface ReplayMessage {
 
 export interface MessageSearchRequest {
   groupId?: string;
-  senderName?: string;
-  textQuery?: string;
-  semanticQuery?: string;
-  dateFrom?: string;
-  dateTo?: string;
+  sender?: string;
+  q?: string;
+  semantic?: string;
   page?: number;
   size?: number;
 }
