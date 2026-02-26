@@ -7,16 +7,12 @@ export interface ReviewQueueItem {
   rawMessageId: string;
   reason: string;
   llmExplanation: string | null;
-  suggestedValues: Record<string, unknown> | null;
-  status: 'pending' | 'resolved' | 'skipped';
-  resolvedBy: string | null;
-  resolution: Record<string, unknown> | null;
+  suggestedValues: string | null;
+  status: string;
   createdAt: string;
-  resolvedAt: string | null;
-  // Enriched fields
-  originalText?: string;
+  // Enriched fields from raw message
+  originalMessageBody?: string;
   senderName?: string | null;
-  groupName?: string;
 }
 
 export interface ResolveRequest {

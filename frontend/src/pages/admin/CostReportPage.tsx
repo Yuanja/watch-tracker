@@ -17,7 +17,7 @@ function CostRow({ row }: { row: AllUserCostRow }) {
         <p className="text-sm font-medium text-gray-900">
           {row.displayName ?? '—'}
         </p>
-        <p className="text-xs text-gray-500">{row.email}</p>
+        <p className="text-xs text-gray-500">{row.userEmail}</p>
       </td>
       <td className="px-4 py-3 text-right text-sm tabular-nums text-gray-700">
         {row.totalInputTokens.toLocaleString()}
@@ -26,7 +26,7 @@ function CostRow({ row }: { row: AllUserCostRow }) {
         {row.totalOutputTokens.toLocaleString()}
       </td>
       <td className="px-4 py-3 text-right text-sm tabular-nums text-gray-700">
-        {row.sessionCount.toLocaleString()}
+        {row.totalSessions.toLocaleString()}
       </td>
       <td className="px-4 py-3 text-right text-sm tabular-nums font-semibold text-gray-900">
         {formatCost(row.totalCostUsd)}
@@ -63,7 +63,7 @@ export function CostReportPage() {
     (acc, row) => ({
       inputTokens: acc.inputTokens + row.totalInputTokens,
       outputTokens: acc.outputTokens + row.totalOutputTokens,
-      sessions: acc.sessions + row.sessionCount,
+      sessions: acc.sessions + row.totalSessions,
       cost: acc.cost + row.totalCostUsd,
     }),
     { inputTokens: 0, outputTokens: 0, sessions: 0, cost: 0 }

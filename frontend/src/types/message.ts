@@ -36,9 +36,7 @@ export interface ReplayMessage {
   replyToMsgId: string | null;
   isForwarded: boolean;
   timestampWa: string;
-  receivedAt: string;
   processed: boolean;
-  processingError: string | null;
   extractedListing?: ExtractedListingRef | null;
 }
 

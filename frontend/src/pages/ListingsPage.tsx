@@ -119,26 +119,26 @@ export function ListingsPage() {
         ) : stats ? (
           <>
             <StatCard
-              label="Total Active"
-              value={stats.totalActive}
+              label="Total Listings"
+              value={stats.total}
               icon={<Activity className="h-5 w-5 text-green-600" />}
               iconBg="bg-green-100"
             />
             <StatCard
               label="Sell Listings"
-              value={stats.sellCount}
+              value={stats.byIntent?.sell ?? 0}
               icon={<TrendingUp className="h-5 w-5 text-blue-600" />}
               iconBg="bg-blue-100"
             />
             <StatCard
               label="Want Listings"
-              value={stats.wantCount}
+              value={stats.byIntent?.want ?? 0}
               icon={<TrendingDown className="h-5 w-5 text-purple-600" />}
               iconBg="bg-purple-100"
             />
             <StatCard
               label="Pending Review"
-              value={stats.pendingReview}
+              value={stats.byStatus?.pending_review ?? 0}
               icon={<Clock className="h-5 w-5 text-yellow-600" />}
               iconBg="bg-yellow-100"
             />

@@ -2,7 +2,6 @@ export type ChatRole = 'user' | 'assistant' | 'system';
 
 export interface ChatSession {
   id: string;
-  userId: string;
   title: string | null;
   createdAt: string;
   updatedAt: string;
@@ -66,13 +65,12 @@ export interface CostSummary {
   totalOutputTokens: number;
   totalCostUsd: number;
   sessionCount: number;
-  byPeriod: PeriodCost[];
+  dailyBreakdown: DailyUsage[];
 }
 
-export interface PeriodCost {
-  periodDate: string;
+export interface DailyUsage {
+  date: string;
   inputTokens: number;
   outputTokens: number;
   costUsd: number;
-  sessionCount: number;
 }

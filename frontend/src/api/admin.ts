@@ -18,12 +18,13 @@ export interface AuditLogEntry {
 
 export interface AllUserCostRow {
   userId: string;
-  email: string;
+  userEmail: string;
   displayName: string | null;
   totalInputTokens: number;
   totalOutputTokens: number;
   totalCostUsd: number;
-  sessionCount: number;
+  totalSessions: number;
+  recordCount: number;
 }
 
 // ---- User Management ----

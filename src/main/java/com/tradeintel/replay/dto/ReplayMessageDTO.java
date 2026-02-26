@@ -2,6 +2,8 @@ package com.tradeintel.replay.dto;
 
 import com.tradeintel.common.entity.RawMessage;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -73,6 +75,7 @@ public class ReplayMessageDTO {
     public void setMediaLocalPath(String mediaLocalPath) { this.mediaLocalPath = mediaLocalPath; }
     public String getReplyToMsgId() { return replyToMsgId; }
     public void setReplyToMsgId(String replyToMsgId) { this.replyToMsgId = replyToMsgId; }
+    @JsonProperty("isForwarded")
     public boolean isForwarded() { return isForwarded; }
     public void setForwarded(boolean forwarded) { isForwarded = forwarded; }
     public OffsetDateTime getTimestampWa() { return timestampWa; }

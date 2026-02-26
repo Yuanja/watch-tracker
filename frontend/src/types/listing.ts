@@ -14,13 +14,13 @@ export interface Listing {
   // Normalized fields
   itemDescription: string;
   itemCategoryId: string | null;
-  categoryName: string | null;
+  itemCategoryName: string | null;
   manufacturerId: string | null;
   manufacturerName: string | null;
   partNumber: string | null;
   quantity: number | null;
   unitId: string | null;
-  unitAbbr: string | null;
+  unitAbbreviation: string | null;
   price: number | null;
   priceCurrency: string;
   conditionId: string | null;
@@ -34,7 +34,7 @@ export interface Listing {
   // Review state
   status: ListingStatus;
   needsHumanReview: boolean;
-  reviewedBy: string | null;
+  reviewedByName: string | null;
   reviewedAt: string | null;
 
   // Lifecycle
@@ -42,7 +42,7 @@ export interface Listing {
   updatedAt: string;
   expiresAt: string | null;
   deletedAt: string | null;
-  deletedBy: string | null;
+  deletedById: string | null;
 }
 
 export interface ListingSearchRequest {
@@ -63,9 +63,7 @@ export interface ListingSearchRequest {
 }
 
 export interface ListingStats {
-  totalActive: number;
-  sellCount: number;
-  wantCount: number;
-  pendingReview: number;
-  todayCount: number;
+  total: number;
+  byIntent: Record<string, number>;
+  byStatus: Record<string, number>;
 }

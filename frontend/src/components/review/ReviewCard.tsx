@@ -19,8 +19,18 @@ interface ResolutionFields {
   intent: 'sell' | 'want' | 'unknown';
 }
 
+function parseSuggestedValues(raw: string | null): Record<string, unknown> {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed === 'object' && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 function buildInitialFields(item: ReviewQueueItem): ResolutionFields {
-  const sv = (item.suggestedValues ?? {}) as Record<string, unknown>;
+  const sv = parseSuggestedValues(item.suggestedValues);
   return {
     itemDescription: String(sv['itemDescription'] ?? ''),
     category: String(sv['category'] ?? ''),
@@ -176,7 +186,7 @@ function ResolveForm({
 // ── Confidence Pill ─────────────────────────────────────────────────────────
 
 function ConfidencePill({ item }: { item: ReviewQueueItem }) {
-  const sv = (item.suggestedValues ?? {}) as Record<string, unknown>;
+  const sv = parseSuggestedValues(item.suggestedValues);
   const score =
     typeof sv['confidenceScore'] === 'number'
       ? sv['confidenceScore']
@@ -254,7 +264,7 @@ export function ReviewCard({
             Original Message
           </p>
           <p className="whitespace-pre-wrap text-sm text-gray-800 bg-gray-50 rounded-lg border border-gray-200 px-3 py-2">
-            {item.originalText ?? (
+            {item.originalMessageBody ?? (
               <span className="text-gray-400 italic">No original text available</span>
             )}
           </p>
@@ -272,11 +282,6 @@ export function ReviewCard({
             <span className="font-medium text-gray-600">Sender:</span> {item.senderName}
           </span>
         )}
-        {item.groupName && (
-          <span>
-            <span className="font-medium text-gray-600">Group:</span> {item.groupName}
-          </span>
-        )}
         <span>
           <span className="font-medium text-gray-600">Queued:</span>{' '}
           {new Date(item.createdAt).toLocaleString()}
@@ -292,15 +297,17 @@ export function ReviewCard({
         </div>
       )}
 
-      {item.suggestedValues && Object.keys(item.suggestedValues).length > 0 && (
-        <div className="mt-3">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-2">
-            Suggested Values
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {Object.entries(item.suggestedValues).map(([key, val]) => {
-              if (val === null || val === undefined || val === '') return null;
-              return (
+      {(() => {
+        const sv = parseSuggestedValues(item.suggestedValues);
+        const entries = Object.entries(sv).filter(([, val]) => val !== null && val !== undefined && val !== '');
+        if (entries.length === 0) return null;
+        return (
+          <div className="mt-3">
+            <p className="text-xs font-medium uppercase tracking-wide text-gray-400 mb-2">
+              Suggested Values
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {entries.map(([key, val]) => (
                 <div
                   key={key}
                   className="flex items-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1"
@@ -310,11 +317,11 @@ export function ReviewCard({
                   </span>
                   <span className="text-xs text-gray-800">{String(val)}</span>
                 </div>
-              );
-            })}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {!showForm && (
         <div className="mt-4 flex gap-2">
@@ -322,7 +329,7 @@ export function ReviewCard({
             onClick={() => setShowForm(true)}
             disabled={isWorking}
             className="flex items-center gap-1.5 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50"
-            aria-label={`Resolve review item for: ${item.originalText?.slice(0, 50) ?? item.id}`}
+            aria-label={`Resolve review item for: ${item.originalMessageBody?.slice(0, 50) ?? item.id}`}
           >
             <CheckCircle className="h-4 w-4" />
             Resolve
@@ -331,7 +338,7 @@ export function ReviewCard({
             onClick={() => skipMutation.mutate()}
             disabled={isWorking}
             className="flex items-center gap-1.5 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-400 disabled:opacity-50"
-            aria-label={`Skip review item for: ${item.originalText?.slice(0, 50) ?? item.id}`}
+            aria-label={`Skip review item for: ${item.originalMessageBody?.slice(0, 50) ?? item.id}`}
           >
             {skipMutation.isPending ? (
               <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />

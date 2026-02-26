@@ -7,7 +7,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { getCostSummary } from '../api/chat';
-import type { PeriodCost } from '../types/chat';
+import type { DailyUsage } from '../types/chat';
 import { LoadingOverlay } from '../components/common/LoadingSpinner';
 import { EmptyState } from '../components/common/EmptyState';
 
@@ -29,7 +29,7 @@ function formatTokens(n: number): string {
 }
 
 function formatDate(iso: string): string {
-  // periodDate is expected in YYYY-MM-DD format
+  // date is expected in YYYY-MM-DD format
   const d = new Date(`${iso}T00:00:00`);
   return d.toLocaleDateString('en-US', {
     weekday: 'short',
@@ -97,7 +97,7 @@ export function CostPage() {
   });
 
   const maxDayCost = data
-    ? Math.max(...data.byPeriod.map((p) => p.costUsd), 0)
+    ? Math.max(...data.dailyBreakdown.map((p) => p.costUsd), 0)
     : 0;
 
   return (
@@ -166,7 +166,7 @@ export function CostPage() {
           </div>
 
           {/* Daily breakdown */}
-          {data.byPeriod.length === 0 ? (
+          {data.dailyBreakdown.length === 0 ? (
             <div className="rounded-xl border border-gray-200 bg-white p-8 text-center shadow-sm">
               <p className="text-sm text-gray-400">
                 No daily breakdown available yet.
@@ -179,7 +179,7 @@ export function CostPage() {
                   Daily Breakdown
                 </h2>
                 <p className="mt-0.5 text-sm text-gray-500">
-                  {data.byPeriod.length} day{data.byPeriod.length !== 1 ? 's' : ''} of activity
+                  {data.dailyBreakdown.length} day{data.dailyBreakdown.length !== 1 ? 's' : ''} of activity
                 </p>
               </div>
 
@@ -194,34 +194,28 @@ export function CostPage() {
                       <th className="px-5 py-3 font-medium text-gray-600 text-right">
                         Output Tokens
                       </th>
-                      <th className="px-5 py-3 font-medium text-gray-600 text-right">
-                        Sessions
-                      </th>
                       <th className="px-5 py-3 font-medium text-gray-600">
                         Cost
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {data.byPeriod.map((period: PeriodCost) => (
+                    {data.dailyBreakdown.map((day: DailyUsage) => (
                       <tr
-                        key={period.periodDate}
+                        key={day.date}
                         className="transition-colors hover:bg-gray-50"
                       >
                         <td className="px-5 py-3 font-medium text-gray-800">
-                          {formatDate(period.periodDate)}
+                          {formatDate(day.date)}
                         </td>
                         <td className="px-5 py-3 text-right tabular-nums text-gray-700">
-                          {period.inputTokens.toLocaleString()}
+                          {day.inputTokens.toLocaleString()}
                         </td>
                         <td className="px-5 py-3 text-right tabular-nums text-gray-700">
-                          {period.outputTokens.toLocaleString()}
-                        </td>
-                        <td className="px-5 py-3 text-right tabular-nums text-gray-700">
-                          {period.sessionCount}
+                          {day.outputTokens.toLocaleString()}
                         </td>
                         <td className="px-5 py-3">
-                          <CostBar value={period.costUsd} max={maxDayCost} />
+                          <CostBar value={day.costUsd} max={maxDayCost} />
                         </td>
                       </tr>
                     ))}
@@ -236,9 +230,6 @@ export function CostPage() {
                       </td>
                       <td className="px-5 py-3 text-right tabular-nums text-gray-900">
                         {data.totalOutputTokens.toLocaleString()}
-                      </td>
-                      <td className="px-5 py-3 text-right tabular-nums text-gray-900">
-                        {data.sessionCount}
                       </td>
                       <td className="px-5 py-3 text-gray-900">
                         <span className="font-semibold text-emerald-700">

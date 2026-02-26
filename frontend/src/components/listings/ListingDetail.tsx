@@ -84,8 +84,8 @@ export function ListingDetail({ listing, canEdit, canDelete, onEdit, onDelete }:
         </DetailField>
 
         <DetailField label="Category">
-          {listing.categoryName ? (
-            <Badge variant="teal">{listing.categoryName}</Badge>
+          {listing.itemCategoryName ? (
+            <Badge variant="teal">{listing.itemCategoryName}</Badge>
           ) : (
             <span className="text-gray-400">&mdash;</span>
           )}
@@ -107,7 +107,7 @@ export function ListingDetail({ listing, canEdit, canDelete, onEdit, onDelete }:
 
         <DetailField label="Quantity">
           {listing.quantity !== null
-            ? `${listing.quantity}${listing.unitAbbr ? ` ${listing.unitAbbr}` : ''}`
+            ? `${listing.quantity}${listing.unitAbbreviation ? ` ${listing.unitAbbreviation}` : ''}`
             : <span className="text-gray-400">&mdash;</span>}
         </DetailField>
 
@@ -137,9 +137,9 @@ export function ListingDetail({ listing, canEdit, canDelete, onEdit, onDelete }:
           </DetailField>
         )}
 
-        {listing.reviewedBy && (
+        {listing.reviewedByName && (
           <DetailField label="Reviewed By">
-            {listing.reviewedBy}
+            {listing.reviewedByName}
             {listing.reviewedAt ? ` on ${formatDate(listing.reviewedAt)}` : ''}
           </DetailField>
         )}

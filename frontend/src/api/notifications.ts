@@ -2,11 +2,9 @@ import { apiClient } from './client';
 
 export interface NotificationRule {
   id: string;
-  userId: string;
   nlRule: string;
   parsedIntent: 'sell' | 'want' | 'unknown' | null;
   parsedKeywords: string[];
-  parsedCategoryIds: string[];
   parsedPriceMin: number | null;
   parsedPriceMax: number | null;
   notifyChannel: string;
@@ -14,7 +12,6 @@ export interface NotificationRule {
   isActive: boolean;
   lastTriggered: string | null;
   createdAt: string;
-  updatedAt: string;
 }
 
 export interface CreateNotificationRuleRequest {
