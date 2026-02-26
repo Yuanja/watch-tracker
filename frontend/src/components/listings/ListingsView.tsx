@@ -35,6 +35,7 @@ export function ListingsView({
   const queryClient = useQueryClient();
   const [editingListing, setEditingListing] = useState<Listing | null>(null);
   const [deletingListing, setDeletingListing] = useState<Listing | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const isAdmin = user?.role === 'admin' || user?.role === 'uber_admin';
   const isUberAdmin = user?.role === 'uber_admin';
@@ -43,17 +44,26 @@ export function ListingsView({
     mutationFn: ({ id, updates }: { id: string; updates: Record<string, unknown> }) =>
       updateListing(id, updates as Partial<Listing>),
     onSuccess: () => {
+      setActionError(null);
       queryClient.invalidateQueries({ queryKey: ['listings'] });
       setEditingListing(null);
+    },
+    onError: (err) => {
+      setActionError(err instanceof Error ? err.message : 'Failed to update listing');
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteListing(id),
     onSuccess: () => {
+      setActionError(null);
       queryClient.invalidateQueries({ queryKey: ['listings'] });
       queryClient.invalidateQueries({ queryKey: ['listing-stats'] });
       setDeletingListing(null);
+    },
+    onError: (err) => {
+      setDeletingListing(null);
+      setActionError(err instanceof Error ? err.message : 'Failed to delete listing');
     },
   });
 
@@ -74,6 +84,19 @@ export function ListingsView({
 
   return (
     <>
+      {actionError && (
+        <div className="mx-4 mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {actionError}
+          <button
+            type="button"
+            onClick={() => setActionError(null)}
+            className="ml-2 font-medium underline hover:text-red-800"
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Result count */}
       <div className="border-b border-gray-100 px-4 py-3">
         <p className="text-sm text-gray-500">

@@ -22,6 +22,7 @@ export function ReplayView() {
   const {
     data: groups = [],
     isLoading: isLoadingGroups,
+    isError: isGroupsError,
   } = useQuery({
     queryKey: ['groups'],
     queryFn: getGroups,
@@ -32,6 +33,7 @@ export function ReplayView() {
   const {
     data: messagesData,
     isLoading: isLoadingMessages,
+    isError: isMessagesError,
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
@@ -80,12 +82,18 @@ export function ReplayView() {
           <h2 className="text-sm font-semibold text-gray-900">Groups</h2>
         </div>
         <div className="flex-1 overflow-y-auto">
-          <GroupList
-            groups={groups}
-            selectedGroupId={selectedGroupId}
-            onSelectGroup={handleGroupSelect}
-            isLoading={isLoadingGroups}
-          />
+          {isGroupsError ? (
+            <div className="m-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              Failed to load groups. Please refresh the page.
+            </div>
+          ) : (
+            <GroupList
+              groups={groups}
+              selectedGroupId={selectedGroupId}
+              onSelectGroup={handleGroupSelect}
+              isLoading={isLoadingGroups}
+            />
+          )}
         </div>
       </div>
 
@@ -118,15 +126,21 @@ export function ReplayView() {
             />
 
             {/* Messages */}
-            <MessageThread
-              messages={allMessages}
-              isLoading={isLoadingMessages}
-              isFetchingMore={isFetchingNextPage}
-              hasMore={hasNextPage ?? false}
-              onLoadMore={fetchNextPage}
-              highlightMessageId={highlightMessageId}
-              highlightText={searchHighlightText}
-            />
+            {isMessagesError ? (
+              <div className="m-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                Failed to load messages. Please try selecting the group again.
+              </div>
+            ) : (
+              <MessageThread
+                messages={allMessages}
+                isLoading={isLoadingMessages}
+                isFetchingMore={isFetchingNextPage}
+                hasMore={hasNextPage ?? false}
+                onLoadMore={fetchNextPage}
+                highlightMessageId={highlightMessageId}
+                highlightText={searchHighlightText}
+              />
+            )}
           </>
         ) : (
           /* Empty state — no group selected */

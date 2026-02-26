@@ -16,6 +16,8 @@ export function ChatPage() {
   const [optimisticMessages, setOptimisticMessages] = useState<ChatMessage[]>([]);
 
   // Fetch session list
+  const [mutationError, setMutationError] = useState<string | null>(null);
+
   const {
     data: sessions = [],
     isLoading: isLoadingSessions,
@@ -55,9 +57,13 @@ export function ChatPage() {
   const createMutation = useMutation({
     mutationFn: createSession,
     onSuccess: (session) => {
+      setMutationError(null);
       queryClient.invalidateQueries({ queryKey: ['chatSessions'] });
       setActiveSessionId(session.id);
       setOptimisticMessages([]);
+    },
+    onError: (err) => {
+      setMutationError(err instanceof Error ? err.message : 'Failed to create session');
     },
   });
 
@@ -66,14 +72,16 @@ export function ChatPage() {
     mutationFn: ({ sessionId, content }: { sessionId: string; content: string }) =>
       sendMessage(sessionId, { message: content }),
     onSuccess: (_data, variables) => {
+      setMutationError(null);
       queryClient.invalidateQueries({
         queryKey: ['chatMessages', variables.sessionId],
       });
       queryClient.invalidateQueries({ queryKey: ['chatSessions'] });
       setOptimisticMessages([]);
     },
-    onError: () => {
+    onError: (err) => {
       setOptimisticMessages([]);
+      setMutationError(err instanceof Error ? err.message : 'Failed to send message');
     },
   });
 
@@ -123,6 +131,18 @@ export function ChatPage() {
       />
 
       <div className="flex flex-1 flex-col overflow-hidden bg-gray-50">
+        {mutationError && (
+          <div className="mx-4 mt-3 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            {mutationError}
+            <button
+              type="button"
+              onClick={() => setMutationError(null)}
+              className="ml-2 font-medium underline hover:text-red-800"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
         <ChatView
           activeSession={activeSession}
           messages={allMessages}
