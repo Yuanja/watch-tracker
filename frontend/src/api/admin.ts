@@ -10,10 +10,20 @@ export interface AuditLogEntry {
   action: string;
   targetType: string | null;
   targetId: string | null;
-  oldValues: Record<string, unknown> | null;
-  newValues: Record<string, unknown> | null;
+  oldValues: string | null;
+  newValues: string | null;
   ipAddress: string | null;
   createdAt: string;
+}
+
+export function parseJsonValues(raw: string | null): Record<string, unknown> | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return typeof parsed === 'object' && parsed !== null ? parsed : null;
+  } catch {
+    return null;
+  }
 }
 
 export interface AllUserCostRow {

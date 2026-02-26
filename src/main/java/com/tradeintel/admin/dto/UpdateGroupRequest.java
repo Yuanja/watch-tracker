@@ -15,6 +15,8 @@ public record UpdateGroupRequest(
 
         String description,
 
-        String avatarUrl
+        String avatarUrl,
+
+        Boolean isActive
 ) {
 }

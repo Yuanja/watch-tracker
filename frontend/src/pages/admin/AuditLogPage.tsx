@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ScrollText, ChevronLeft, ChevronRight } from 'lucide-react';
-import { getAuditLog } from '../../api/admin';
+import { getAuditLog, parseJsonValues } from '../../api/admin';
 import type { AuditLogEntry } from '../../api/admin';
 import { EmptyState } from '../../components/common/EmptyState';
 import { LoadingOverlay } from '../../components/common/LoadingSpinner';
@@ -51,8 +51,8 @@ function AuditRow({ entry }: { entry: AuditLogEntry }) {
         {entry.targetId && (
           <span className="text-gray-400"> #{entry.targetId.slice(0, 8)}</span>
         )}
-        <ValuePreview label="Old" values={entry.oldValues} />
-        <ValuePreview label="New" values={entry.newValues} />
+        <ValuePreview label="Old" values={parseJsonValues(entry.oldValues)} />
+        <ValuePreview label="New" values={parseJsonValues(entry.newValues)} />
       </td>
       <td className="px-4 py-3 text-xs text-gray-400">
         {entry.ipAddress ?? '—'}

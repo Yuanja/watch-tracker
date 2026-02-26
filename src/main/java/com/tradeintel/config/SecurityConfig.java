@@ -61,13 +61,17 @@ public class SecurityConfig {
     private final JwtAuthFilter            jwtAuthFilter;
     private final GoogleOAuth2UserService  oAuth2UserService;
     private final OAuth2SuccessHandler     oAuth2SuccessHandler;
+    private final List<String>             allowedOrigins;
 
     public SecurityConfig(JwtAuthFilter           jwtAuthFilter,
                           GoogleOAuth2UserService  oAuth2UserService,
-                          OAuth2SuccessHandler     oAuth2SuccessHandler) {
+                          OAuth2SuccessHandler     oAuth2SuccessHandler,
+                          @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
+                          List<String>             allowedOrigins) {
         this.jwtAuthFilter       = jwtAuthFilter;
         this.oAuth2UserService   = oAuth2UserService;
         this.oAuth2SuccessHandler = oAuth2SuccessHandler;
+        this.allowedOrigins      = allowedOrigins;
     }
 
     // -------------------------------------------------------------------------
@@ -158,11 +162,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        // Dev origins. TODO: externalise to config and restrict in production.
-        config.setAllowedOrigins(List.of(
-                "http://localhost:5173",   // Vite dev server
-                "http://localhost:3000"    // Alternative React dev server port
-        ));
+        config.setAllowedOrigins(allowedOrigins);
 
         config.setAllowedMethods(List.of(
                 HttpMethod.GET.name(),

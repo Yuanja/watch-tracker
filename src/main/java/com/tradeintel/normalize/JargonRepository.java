@@ -53,4 +53,24 @@ public interface JargonRepository extends JpaRepository<JargonEntry, UUID> {
      * @return page of matching entries
      */
     Page<JargonEntry> findByAcronymContainingIgnoreCase(String acronym, Pageable pageable);
+
+    /**
+     * Paginated filter by verified status.
+     *
+     * @param verified whether the entries are verified
+     * @param pageable pagination and sorting parameters
+     * @return page of matching entries
+     */
+    Page<JargonEntry> findByVerified(boolean verified, Pageable pageable);
+
+    /**
+     * Paginated search by acronym with verified status filter.
+     *
+     * @param acronym  the acronym prefix to search
+     * @param verified whether the entries are verified
+     * @param pageable pagination and sorting parameters
+     * @return page of matching entries
+     */
+    Page<JargonEntry> findByAcronymContainingIgnoreCaseAndVerified(
+            String acronym, boolean verified, Pageable pageable);
 }

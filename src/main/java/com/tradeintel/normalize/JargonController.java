@@ -58,11 +58,12 @@ public class JargonController {
     @GetMapping
     public ResponseEntity<Page<JargonEntryDTO>> list(
             @RequestParam(required = false) String search,
+            @RequestParam(required = false) Boolean verified,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "50") int size) {
 
-        log.debug("GET /api/jargon search='{}' page={} size={}", search, page, size);
-        Page<JargonEntryDTO> result = jargonService.list(search, page, size);
+        log.debug("GET /api/jargon search='{}' verified={} page={} size={}", search, verified, page, size);
+        Page<JargonEntryDTO> result = jargonService.list(search, verified, page, size);
         return ResponseEntity.ok(result);
     }
 
@@ -155,9 +156,7 @@ public class JargonController {
     @GetMapping("/unverified")
     public ResponseEntity<List<JargonEntryDTO>> listUnverified() {
         log.debug("GET /api/jargon/unverified");
-        List<JargonEntryDTO> unverified = jargonService.list(null, 0, Integer.MAX_VALUE)
-                .filter(dto -> Boolean.FALSE.equals(dto.getVerified()))
-                .toList();
+        List<JargonEntryDTO> unverified = jargonService.listUnverified();
         return ResponseEntity.ok(unverified);
     }
 

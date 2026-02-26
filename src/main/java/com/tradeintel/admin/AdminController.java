@@ -359,6 +359,9 @@ public class AdminController {
         group.setGroupName(request.groupName());
         group.setDescription(request.description());
         group.setAvatarUrl(request.avatarUrl());
+        if (request.isActive() != null) {
+            group.setIsActive(request.isActive());
+        }
 
         WhatsappGroup saved = groupRepository.save(group);
 

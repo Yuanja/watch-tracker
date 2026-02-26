@@ -54,19 +54,39 @@ public class JargonService {
      * @return page of {@link JargonEntryDTO}
      */
     @Transactional(readOnly = true)
-    public Page<JargonEntryDTO> list(String search, int page, int size) {
+    public Page<JargonEntryDTO> list(String search, Boolean verified, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("acronym").ascending());
 
         Page<JargonEntry> entries;
         if (search != null && !search.isBlank()) {
-            entries = jargonRepository.findByAcronymContainingIgnoreCase(search.trim(), pageable);
+            if (verified != null) {
+                entries = jargonRepository.findByAcronymContainingIgnoreCaseAndVerified(
+                        search.trim(), verified, pageable);
+            } else {
+                entries = jargonRepository.findByAcronymContainingIgnoreCase(search.trim(), pageable);
+            }
+        } else if (verified != null) {
+            entries = jargonRepository.findByVerified(verified, pageable);
         } else {
             entries = jargonRepository.findAll(pageable);
         }
 
-        log.debug("Listing jargon entries: search='{}', page={}, size={}, total={}",
-                search, page, size, entries.getTotalElements());
+        log.debug("Listing jargon entries: search='{}', verified={}, page={}, size={}, total={}",
+                search, verified, page, size, entries.getTotalElements());
         return entries.map(JargonEntryDTO::fromEntity);
+    }
+
+    /**
+     * Returns all unverified entries awaiting admin review, newest-first.
+     *
+     * @return list of unverified {@link JargonEntryDTO}s
+     */
+    @Transactional(readOnly = true)
+    public List<JargonEntryDTO> listUnverified() {
+        return jargonRepository.findByVerifiedFalseOrderByCreatedAtDesc()
+                .stream()
+                .map(JargonEntryDTO::fromEntity)
+                .toList();
     }
 
     // -------------------------------------------------------------------------
