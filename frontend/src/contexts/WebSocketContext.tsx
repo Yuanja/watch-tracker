@@ -40,7 +40,8 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
     if (!token) return;
 
     const stompClient = new Client({
-      webSocketFactory: () => new SockJS(`/ws?token=${token}`),
+      webSocketFactory: () => new SockJS('/ws'),
+      connectHeaders: { token },
       reconnectDelay: WS_RECONNECT_DELAY_MS,
       onConnect: () => {
         if (mountedRef.current) {

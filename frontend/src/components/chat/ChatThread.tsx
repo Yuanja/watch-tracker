@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Bot } from 'lucide-react';
 import { clsx } from 'clsx';
 import type { ChatMessage } from '../../types/chat';
+import { parseToolCalls } from '../../types/chat';
 import { EmptyState } from '../common/EmptyState';
 import { formatMicroCost } from '../../utils/formatters';
 import { ToolResultCard } from './ToolResultCard';
@@ -12,6 +13,7 @@ import { ToolResultCard } from './ToolResultCard';
 
 function ChatBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === 'user';
+  const toolCalls = parseToolCalls(message.toolCalls);
   const hasTokenInfo =
     (message.inputTokens > 0 || message.outputTokens > 0) &&
     message.role === 'assistant';
@@ -49,10 +51,10 @@ function ChatBubble({ message }: { message: ChatMessage }) {
           {message.content}
         </div>
 
-        {message.toolCalls && message.toolCalls.length > 0 && (
+        {toolCalls.length > 0 && (
           <div className="w-full space-y-1 px-1">
-            {message.toolCalls.map((tc) => (
-              <ToolResultCard key={tc.id} toolCall={tc} />
+            {toolCalls.map((tc, idx) => (
+              <ToolResultCard key={`${message.id}-tool-${idx}`} toolCall={tc} />
             ))}
           </div>
         )}

@@ -10,23 +10,34 @@ export interface ChatSession {
 }
 
 export interface ToolCall {
-  id: string;
-  name: string;
-  arguments: Record<string, unknown>;
+  tool: string;
+  params: Record<string, unknown>;
   result?: unknown;
 }
 
 export interface ChatMessage {
   id: string;
-  sessionId: string;
   role: ChatRole;
   content: string;
   modelUsed: string | null;
   inputTokens: number;
   outputTokens: number;
   costUsd: number;
-  toolCalls: ToolCall[] | null;
+  toolCalls: string | null;
   createdAt: string;
+}
+
+/**
+ * Parse the raw JSON toolCalls string from the backend into typed ToolCall[].
+ */
+export function parseToolCalls(raw: string | null): ToolCall[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -43,7 +54,7 @@ export interface SessionDetail {
  */
 export interface SendMessageResponse {
   message: ChatMessage;
-  toolResults: ToolCall[];
+  toolResults: string[];
 }
 
 export interface SendMessageRequest {

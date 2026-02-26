@@ -18,7 +18,7 @@ export function ToolResultCard({ toolCall }: ToolResultCardProps) {
         aria-expanded={expanded}
       >
         <Wrench className="h-3 w-3 shrink-0 text-gray-400" aria-hidden="true" />
-        <span className="font-medium text-gray-700">{toolCall.name}</span>
+        <span className="font-medium text-gray-700">{toolCall.tool}</span>
         <span className="ml-auto shrink-0 text-gray-400">
           {expanded ? (
             <ChevronDown className="h-3 w-3" aria-hidden="true" />
@@ -30,14 +30,14 @@ export function ToolResultCard({ toolCall }: ToolResultCardProps) {
 
       {expanded && (
         <div className="border-t border-gray-200 px-3 py-2 space-y-2">
-          {toolCall.arguments &&
-            Object.keys(toolCall.arguments).length > 0 && (
+          {toolCall.params &&
+            Object.keys(toolCall.params).length > 0 && (
               <div>
                 <p className="mb-1 font-semibold text-gray-500 uppercase tracking-wide text-[10px]">
-                  Arguments
+                  Parameters
                 </p>
                 <pre className="overflow-x-auto rounded bg-white border border-gray-100 p-2 text-gray-700 leading-relaxed">
-                  {JSON.stringify(toolCall.arguments, null, 2)}
+                  {JSON.stringify(toolCall.params, null, 2)}
                 </pre>
               </div>
             )}

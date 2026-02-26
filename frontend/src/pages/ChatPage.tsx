@@ -93,7 +93,6 @@ export function ChatPage() {
 
       const optimisticUserMsg: ChatMessage = {
         id: `optimistic-user-${Date.now()}`,
-        sessionId: activeSessionId,
         role: 'user',
         content,
         modelUsed: null,
