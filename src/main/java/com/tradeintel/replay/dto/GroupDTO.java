@@ -1,5 +1,6 @@
 package com.tradeintel.replay.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.tradeintel.common.entity.WhatsappGroup;
 
 import java.time.OffsetDateTime;
@@ -14,6 +15,7 @@ public class GroupDTO {
     private String avatarUrl;
     private boolean isActive;
     private OffsetDateTime createdAt;
+    private OffsetDateTime updatedAt;
 
     public static GroupDTO fromEntity(WhatsappGroup group) {
         GroupDTO dto = new GroupDTO();
@@ -24,6 +26,7 @@ public class GroupDTO {
         dto.setAvatarUrl(group.getAvatarUrl());
         dto.setActive(group.getIsActive() != null && group.getIsActive());
         dto.setCreatedAt(group.getCreatedAt());
+        dto.setUpdatedAt(group.getUpdatedAt());
         return dto;
     }
 
@@ -37,8 +40,11 @@ public class GroupDTO {
     public void setDescription(String description) { this.description = description; }
     public String getAvatarUrl() { return avatarUrl; }
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
+    @JsonProperty("isActive")
     public boolean isActive() { return isActive; }
     public void setActive(boolean active) { isActive = active; }
     public OffsetDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(OffsetDateTime createdAt) { this.createdAt = createdAt; }
+    public OffsetDateTime getUpdatedAt() { return updatedAt; }
+    public void setUpdatedAt(OffsetDateTime updatedAt) { this.updatedAt = updatedAt; }
 }

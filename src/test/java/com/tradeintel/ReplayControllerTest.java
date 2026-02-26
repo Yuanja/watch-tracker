@@ -110,7 +110,7 @@ class ReplayControllerTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].whapiGroupId", equalTo("group-active@g.us")))
                 .andExpect(jsonPath("$[0].groupName",    equalTo("Active Trade Group")))
-                .andExpect(jsonPath("$[0].active",       equalTo(true)));
+                .andExpect(jsonPath("$[0].isActive",     equalTo(true)));
 
         log.info("Verified /api/messages/groups returns only active groups");
     }

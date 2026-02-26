@@ -224,15 +224,15 @@ export function ReviewCard({
 
   const resolveMutation = useMutation({
     mutationFn: (fields: ResolutionFields) => {
-      const resolution: Record<string, unknown> = {
+      const request: Record<string, unknown> = {
         itemDescription: fields.itemDescription,
         intent: fields.intent,
       };
-      if (fields.category) resolution['category'] = fields.category;
-      if (fields.partNumber) resolution['partNumber'] = fields.partNumber;
-      if (fields.quantity) resolution['quantity'] = parseFloat(fields.quantity);
-      if (fields.price) resolution['price'] = parseFloat(fields.price);
-      return resolveReviewItem(item.id, { resolution });
+      if (fields.category) request['categoryName'] = fields.category;
+      if (fields.partNumber) request['partNumber'] = fields.partNumber;
+      if (fields.quantity) request['quantity'] = parseFloat(fields.quantity);
+      if (fields.price) request['price'] = parseFloat(fields.price);
+      return resolveReviewItem(item.id, request as import('../../api/review').ResolveRequest);
     },
     onSuccess: () => {
       onSuccess('Item resolved successfully.');

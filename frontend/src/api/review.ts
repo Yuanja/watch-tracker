@@ -16,7 +16,15 @@ export interface ReviewQueueItem {
 }
 
 export interface ResolveRequest {
-  resolution: Record<string, unknown>;
+  itemDescription?: string;
+  categoryName?: string;
+  manufacturerName?: string;
+  partNumber?: string;
+  quantity?: number;
+  unit?: string;
+  price?: number;
+  condition?: string;
+  intent?: string;
 }
 
 export async function getReviewQueue(
