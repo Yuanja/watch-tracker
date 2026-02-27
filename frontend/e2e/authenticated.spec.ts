@@ -198,6 +198,20 @@ test.describe('Admin Pages (admin+)', () => {
     await expect(page.getByRole('heading', { name: 'Manufacturers' })).toBeVisible();
   });
 
+  test('units admin page loads', async ({ page }) => {
+    await setupAuth(page, 'admin');
+    await page.goto('/admin/units');
+
+    await expect(page.getByRole('heading', { name: 'Units' })).toBeVisible();
+  });
+
+  test('conditions admin page loads', async ({ page }) => {
+    await setupAuth(page, 'admin');
+    await page.goto('/admin/conditions');
+
+    await expect(page.getByRole('heading', { name: 'Conditions' })).toBeVisible();
+  });
+
   test('jargon admin page loads', async ({ page }) => {
     await setupAuth(page, 'admin');
     await page.goto('/admin/jargon');
@@ -241,6 +255,13 @@ test.describe('Uber Admin Pages', () => {
     await page.goto('/admin/groups');
 
     await expect(page.getByRole('heading', { name: 'WhatsApp Groups' })).toBeVisible();
+  });
+
+  test('all chats page loads', async ({ page }) => {
+    await setupAuth(page, 'uber_admin');
+    await page.goto('/admin/chats');
+
+    await expect(page.getByRole('heading', { name: 'All Chats' })).toBeVisible();
   });
 
   test('admin user is denied access to uber admin pages', async ({ page }) => {
