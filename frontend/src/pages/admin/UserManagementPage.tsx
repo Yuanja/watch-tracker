@@ -82,8 +82,10 @@ function UserRow({ user }: { user: User }) {
       {/* Active toggle */}
       <td className="px-4 py-3 text-center">
         <button
+          type="button"
           role="switch"
           aria-checked={user.isActive}
+          aria-label={user.isActive ? 'Deactivate user' : 'Activate user'}
           onClick={() => activeMutation.mutate(!user.isActive)}
           disabled={activeMutation.isPending}
           className={`relative inline-flex h-5 w-9 cursor-pointer rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 ${
@@ -153,6 +155,7 @@ export function UserManagementPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search users..."
+            aria-label="Search users by email or name"
             className="rounded-md border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 w-52"
           />
         </div>

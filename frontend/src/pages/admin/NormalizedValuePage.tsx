@@ -462,8 +462,10 @@ function DataRow({ config, item }: DataRowProps) {
         {/* Active toggle */}
         <td className="px-4 py-3 text-center">
           <button
+            type="button"
             role="switch"
             aria-checked={isActive}
+            aria-label={isActive ? 'Deactivate item' : 'Activate item'}
             onClick={() => toggleMutation.mutate()}
             disabled={toggleMutation.isPending}
             title={isActive ? 'Deactivate' : 'Activate'}
@@ -483,15 +485,19 @@ function DataRow({ config, item }: DataRowProps) {
         <td className="px-4 py-3">
           <div className="flex items-center gap-1">
             <button
+              type="button"
               onClick={() => setIsEditing(true)}
               title="Edit"
+              aria-label="Edit item"
               className="rounded-md p-1.5 text-gray-400 hover:text-blue-600"
             >
               <Pencil className="h-4 w-4" />
             </button>
             <button
+              type="button"
               onClick={() => setDeleteTarget(item.id)}
               title="Delete"
+              aria-label="Delete item"
               className="rounded-md p-1.5 text-gray-400 hover:text-red-600"
             >
               <Trash2 className="h-4 w-4" />

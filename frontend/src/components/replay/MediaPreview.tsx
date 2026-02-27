@@ -97,6 +97,7 @@ export function MediaPreview({ message }: MediaPreviewProps) {
         href={mediaUrl}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="Download media"
         className="ml-auto text-blue-600 hover:text-blue-800"
       >
         <Download className="h-4 w-4" />
