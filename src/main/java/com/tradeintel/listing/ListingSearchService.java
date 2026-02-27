@@ -7,15 +7,12 @@ import com.tradeintel.listing.dto.ListingSearchRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 /**
  * Dedicated search service for listings that supports both direct filters
@@ -83,16 +80,12 @@ public class ListingSearchService {
 
         // Use keyword-based search as portable fallback
         Pageable pageable = PageRequest.of(page, size);
-        List<Listing> results = listingRepository.findByDescriptionContaining(semanticQuery, pageable);
+        Page<Listing> results = listingRepository.findByDescriptionContaining(semanticQuery, pageable);
 
         log.debug("Semantic listing search: query='{}', embeddingGenerated={}, results={}",
-                semanticQuery, embedding != null, results.size());
+                semanticQuery, embedding != null, results.getTotalElements());
 
-        List<ListingDTO> dtos = results.stream()
-                .map(ListingDTO::fromEntity)
-                .toList();
-
-        return new PageImpl<>(dtos, pageable, dtos.size());
+        return results.map(ListingDTO::fromEntity);
     }
 
     /**

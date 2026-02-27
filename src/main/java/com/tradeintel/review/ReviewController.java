@@ -3,6 +3,7 @@ package com.tradeintel.review;
 import com.tradeintel.auth.UserPrincipal;
 import com.tradeintel.common.security.AdminOnly;
 import com.tradeintel.review.dto.ResolutionRequest;
+import jakarta.validation.Valid;
 import com.tradeintel.review.dto.ReviewItemDTO;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -74,7 +75,7 @@ public class ReviewController {
     @PostMapping("/{id}/resolve")
     public ResponseEntity<ReviewItemDTO> resolve(
             @PathVariable UUID id,
-            @RequestBody ResolutionRequest request,
+            @Valid @RequestBody ResolutionRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         log.info("POST /api/review/{}/resolve by user {}", id, principal.getUserId());
         ReviewItemDTO result = reviewService.resolve(id, request, principal.getUser());

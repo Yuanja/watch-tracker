@@ -91,7 +91,7 @@ public class NotificationController {
     @PutMapping("/{id}")
     public ResponseEntity<NotificationRuleDTO> updateRule(
             @PathVariable UUID id,
-            @RequestBody UpdateRuleRequest request,
+            @Valid @RequestBody UpdateRuleRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
 
         NotificationRuleDTO dto = ruleService.updateRule(id, principal.getUserId(), request);

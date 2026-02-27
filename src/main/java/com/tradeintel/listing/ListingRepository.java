@@ -68,10 +68,13 @@ public interface ListingRepository extends JpaRepository<Listing, UUID>, JpaSpec
      * keyword match on description or part number. Used as a fallback when
      * pgvector is not available (e.g., H2 in tests).
      */
-    @Query("SELECT l FROM Listing l WHERE l.deletedAt IS NULL " +
+    @Query(value = "SELECT l FROM Listing l WHERE l.deletedAt IS NULL " +
+           "AND l.status = 'active' " +
+           "AND LOWER(l.itemDescription) LIKE LOWER(CONCAT('%', :query, '%'))",
+           countQuery = "SELECT COUNT(l) FROM Listing l WHERE l.deletedAt IS NULL " +
            "AND l.status = 'active' " +
            "AND LOWER(l.itemDescription) LIKE LOWER(CONCAT('%', :query, '%'))")
-    List<Listing> findByDescriptionContaining(@Param("query") String query, Pageable pageable);
+    Page<Listing> findByDescriptionContaining(@Param("query") String query, Pageable pageable);
 
     /**
      * Bulk-updates active listings whose expiry date has passed to expired status.
