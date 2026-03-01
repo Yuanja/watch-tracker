@@ -4,6 +4,7 @@ import com.tradeintel.common.entity.RawMessage;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -55,4 +56,13 @@ public interface RawMessageRepository extends JpaRepository<RawMessage, UUID> {
 
     @Query("SELECT m FROM RawMessage m WHERE m.processed = false ORDER BY m.receivedAt ASC")
     Page<RawMessage> findUnprocessed(Pageable pageable);
+
+    @Query("SELECT COUNT(m) FROM RawMessage m WHERE m.processed = false")
+    long countUnprocessed();
+
+    @Modifying
+    @Query("UPDATE RawMessage m SET m.processed = false, m.processingError = null WHERE m.processed = true")
+    int resetAllProcessed();
+
+    long countByProcessedTrue();
 }

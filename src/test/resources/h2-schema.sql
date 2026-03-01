@@ -54,6 +54,7 @@ CREATE TABLE IF NOT EXISTS users (
     avatar_url   VARCHAR(255),
     role         VARCHAR(50)  NOT NULL DEFAULT 'user',
     is_active    BOOLEAN      DEFAULT TRUE,
+    password_hash VARCHAR(255),
     created_at   TIMESTAMP WITH TIME ZONE,
     last_login_at TIMESTAMP WITH TIME ZONE
 );
@@ -92,6 +93,7 @@ CREATE TABLE IF NOT EXISTS raw_messages (
     processed       BOOLEAN      DEFAULT FALSE,
     processing_error CLOB,
     embedding       CLOB,
+    raw_json        CLOB,
     CONSTRAINT fk_raw_msg_group FOREIGN KEY (group_id) REFERENCES whatsapp_groups(id)
 );
 
@@ -142,6 +144,9 @@ CREATE TABLE IF NOT EXISTS listings (
     expires_at         TIMESTAMP WITH TIME ZONE,
     deleted_at         TIMESTAMP WITH TIME ZONE,
     deleted_by         UUID,
+    sold_at            TIMESTAMP WITH TIME ZONE,
+    sold_message_id    VARCHAR(255),
+    buyer_name         VARCHAR(255),
     CONSTRAINT fk_listing_raw_msg   FOREIGN KEY (raw_message_id)   REFERENCES raw_messages(id),
     CONSTRAINT fk_listing_group     FOREIGN KEY (group_id)         REFERENCES whatsapp_groups(id),
     CONSTRAINT fk_listing_category  FOREIGN KEY (item_category_id) REFERENCES categories(id),

@@ -2,6 +2,7 @@ import { apiClient } from './client';
 import type {
   WhatsappGroup,
   ReplayMessage,
+  ExtractedListingRef,
   MessageSearchRequest,
   PagedResponse,
 } from '../types/message';
@@ -44,6 +45,20 @@ export async function searchMessages(
     '/messages/search',
     { params }
   );
+  return response.data;
+}
+
+/**
+ * Trigger extraction on a single message (admin only).
+ */
+export async function extractMessage(
+  messageId: string
+): Promise<ExtractedListingRef | null> {
+  const response = await apiClient.post<ExtractedListingRef>(
+    `/messages/${messageId}/extract`
+  );
+  // 204 No Content means no listing was created
+  if (response.status === 204) return null;
   return response.data;
 }
 

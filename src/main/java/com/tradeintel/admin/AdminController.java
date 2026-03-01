@@ -9,11 +9,15 @@ import com.tradeintel.admin.dto.UpdateGroupRequest;
 import com.tradeintel.admin.dto.UserCostSummaryDTO;
 import com.tradeintel.admin.dto.UserDTO;
 import com.tradeintel.admin.dto.WhatsappGroupDTO;
+import com.tradeintel.archive.RawMessageRepository;
 import com.tradeintel.archive.WhatsappGroupRepository;
 import com.tradeintel.auth.UserPrincipal;
+import com.tradeintel.common.entity.Listing;
+import com.tradeintel.common.entity.RawMessage;
 import com.tradeintel.common.entity.WhatsappGroup;
 import com.tradeintel.common.exception.ResourceNotFoundException;
 import com.tradeintel.common.security.UberAdminOnly;
+import com.tradeintel.processing.MessageProcessingService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.apache.logging.log4j.LogManager;
@@ -40,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -66,15 +71,21 @@ public class AdminController {
     private final CostReportService costReportService;
     private final AuditService auditService;
     private final WhatsappGroupRepository groupRepository;
+    private final MessageProcessingService messageProcessingService;
+    private final RawMessageRepository rawMessageRepository;
 
     public AdminController(UserManagementService userManagementService,
                            CostReportService costReportService,
                            AuditService auditService,
-                           WhatsappGroupRepository groupRepository) {
+                           WhatsappGroupRepository groupRepository,
+                           MessageProcessingService messageProcessingService,
+                           RawMessageRepository rawMessageRepository) {
         this.userManagementService = userManagementService;
         this.costReportService = costReportService;
         this.auditService = auditService;
         this.groupRepository = groupRepository;
+        this.messageProcessingService = messageProcessingService;
+        this.rawMessageRepository = rawMessageRepository;
     }
 
     // =========================================================================
@@ -419,6 +430,156 @@ public class AdminController {
         log.info("WhatsApp group deactivated: {} ({}) by {}", group.getGroupName(), id, principal.getUserId());
 
         return ResponseEntity.noContent().build();
+    }
+
+    // =========================================================================
+    // Batch processing
+    // =========================================================================
+
+    @UberAdminOnly
+    @PostMapping("/processing/batch")
+    public ResponseEntity<Map<String, Object>> batchExtract(
+            @RequestParam(defaultValue = "50") int batchSize) {
+
+        int cappedSize = Math.min(batchSize, 100);
+        log.info("Batch extraction requested: batchSize={}", cappedSize);
+
+        Pageable pageable = PageRequest.of(0, cappedSize, Sort.by("receivedAt").ascending());
+        Page<RawMessage> unprocessed = rawMessageRepository.findUnprocessed(pageable);
+
+        int processed = 0;
+        int listingsCreated = 0;
+        int errors = 0;
+
+        for (RawMessage msg : unprocessed.getContent()) {
+            try {
+                List<Listing> listings = messageProcessingService.processMessageSync(msg.getId());
+                processed++;
+                listingsCreated += listings.size();
+            } catch (Exception e) {
+                log.warn("Batch extraction failed for message {}: {}", msg.getId(), e.getMessage());
+                errors++;
+            }
+        }
+
+        long remaining = rawMessageRepository.countUnprocessed();
+
+        Map<String, Object> result = Map.of(
+                "processed", processed,
+                "listingsCreated", listingsCreated,
+                "errors", errors,
+                "remainingUnprocessed", remaining
+        );
+
+        log.info("Batch extraction complete: processed={}, listings={}, errors={}, remaining={}",
+                processed, listingsCreated, errors, remaining);
+
+        return ResponseEntity.ok(result);
+    }
+
+    // =========================================================================
+    // Reprocessing
+    // =========================================================================
+
+    /**
+     * Resets all processed messages and deletes re-extractable listings,
+     * then triggers a catchup job to re-extract with the current prompt.
+     *
+     * <p>POST /api/admin/processing/reprocess
+     *
+     * @return 202 Accepted with deletion counts, or 409 if catchup is already running
+     */
+    @UberAdminOnly
+    @PostMapping("/processing/reprocess")
+    public ResponseEntity<Map<String, Object>> reprocessAll() {
+        if (messageProcessingService.isCatchupRunning()) {
+            return ResponseEntity.status(409)
+                    .body(Map.of("error", "Catchup already running — wait for it to finish before reprocessing"));
+        }
+
+        Map<String, Integer> counts = messageProcessingService.resetForReprocessing();
+        messageProcessingService.runCatchup();
+
+        log.info("Reprocess triggered: {} listings deleted, {} messages reset",
+                counts.get("listingsDeleted"), counts.get("messagesReset"));
+
+        return ResponseEntity.accepted().body(Map.of(
+                "listingsDeleted", counts.get("listingsDeleted"),
+                "reviewItemsDeleted", counts.get("reviewItemsDeleted"),
+                "messagesReset", counts.get("messagesReset"),
+                "message", "Reprocessing started — " + counts.get("messagesReset") + " messages queued for re-extraction"));
+    }
+
+    /**
+     * Returns processing statistics: total, processed, and unprocessed message counts.
+     *
+     * <p>GET /api/admin/processing/stats
+     *
+     * @return 200 with processing stats
+     */
+    @UberAdminOnly
+    @GetMapping("/processing/stats")
+    public ResponseEntity<Map<String, Object>> getProcessingStats() {
+        long total = rawMessageRepository.count();
+        long processed = rawMessageRepository.countByProcessedTrue();
+        long unprocessed = rawMessageRepository.countUnprocessed();
+
+        return ResponseEntity.ok(Map.of(
+                "totalMessages", total,
+                "processedMessages", processed,
+                "unprocessedMessages", unprocessed,
+                "catchupRunning", messageProcessingService.isCatchupRunning()));
+    }
+
+    // =========================================================================
+    // Catchup processing
+    // =========================================================================
+
+    /**
+     * Triggers an async catchup job that processes the entire backlog of
+     * unprocessed messages through the LLM extraction pipeline.
+     *
+     * <p>POST /api/admin/processing/catchup
+     *
+     * @return 202 Accepted with the queued count, or 409 if already running
+     */
+    @UberAdminOnly
+    @PostMapping("/processing/catchup")
+    public ResponseEntity<Map<String, Object>> startCatchup() {
+        if (messageProcessingService.isCatchupRunning()) {
+            return ResponseEntity.status(409)
+                    .body(Map.of("error", "Catchup already running"));
+        }
+
+        long count = messageProcessingService.getUnprocessedCount();
+        if (count == 0) {
+            return ResponseEntity.ok(Map.of(
+                    "queued", 0L,
+                    "message", "No unprocessed messages"));
+        }
+
+        messageProcessingService.runCatchup();
+        log.info("Catchup job started for {} unprocessed messages", count);
+
+        return ResponseEntity.accepted().body(Map.of(
+                "queued", count,
+                "message", "Catchup started for " + count + " messages"));
+    }
+
+    /**
+     * Returns the current catchup status: whether it's running and how many
+     * unprocessed messages remain.
+     *
+     * <p>GET /api/admin/processing/catchup/status
+     *
+     * @return 200 with running flag and remaining count
+     */
+    @UberAdminOnly
+    @GetMapping("/processing/catchup/status")
+    public ResponseEntity<Map<String, Object>> getCatchupStatus() {
+        return ResponseEntity.ok(Map.of(
+                "running", messageProcessingService.isCatchupRunning(),
+                "unprocessedRemaining", messageProcessingService.getUnprocessedCount()));
     }
 
     // =========================================================================

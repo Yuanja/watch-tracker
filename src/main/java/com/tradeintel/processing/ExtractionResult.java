@@ -24,6 +24,12 @@ public class ExtractionResult {
 
     private double confidence;
 
+    // Cost tracking (not part of LLM JSON response — set by LLMExtractionService)
+    private transient int inputTokens;
+    private transient int outputTokens;
+    private transient double estimatedCostUsd;
+    private transient String modelUsed;
+
     // -------------------------------------------------------------------------
     // Constructors
     // -------------------------------------------------------------------------
@@ -67,6 +73,22 @@ public class ExtractionResult {
         this.confidence = confidence;
     }
 
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public int getInputTokens() { return inputTokens; }
+    public void setInputTokens(int inputTokens) { this.inputTokens = inputTokens; }
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public int getOutputTokens() { return outputTokens; }
+    public void setOutputTokens(int outputTokens) { this.outputTokens = outputTokens; }
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public double getEstimatedCostUsd() { return estimatedCostUsd; }
+    public void setEstimatedCostUsd(double estimatedCostUsd) { this.estimatedCostUsd = estimatedCostUsd; }
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    public String getModelUsed() { return modelUsed; }
+    public void setModelUsed(String modelUsed) { this.modelUsed = modelUsed; }
+
     // -------------------------------------------------------------------------
     // Inner class: ExtractedItem
     // -------------------------------------------------------------------------
@@ -88,6 +110,7 @@ public class ExtractionResult {
         private Double quantity;
         private String unit;
         private Double price;
+        private String currency;
         private String condition;
 
         public ExtractedItem() {
@@ -147,6 +170,14 @@ public class ExtractionResult {
 
         public void setPrice(Double price) {
             this.price = price;
+        }
+
+        public String getCurrency() {
+            return currency;
+        }
+
+        public void setCurrency(String currency) {
+            this.currency = currency;
         }
 
         public String getCondition() {

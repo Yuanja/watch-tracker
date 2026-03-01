@@ -9,6 +9,19 @@ function confidenceColor(score: number): string {
   return 'text-red-700';
 }
 
+function formatPrice(price: number | null, currency: string): string {
+  if (price === null) return '\u2014';
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency || 'USD',
+      maximumFractionDigits: 2,
+    }).format(price);
+  } catch {
+    return `${currency || ''} ${price.toLocaleString()}`.trim();
+  }
+}
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-US', {
     month: 'short',
@@ -105,6 +118,15 @@ export function ListingDetail({ listing, canEdit, canDelete, onEdit, onDelete }:
           )}
         </DetailField>
 
+        <DetailField label="Price">
+          <span className="font-semibold">
+            {formatPrice(listing.price, listing.priceCurrency)}
+          </span>
+          {listing.price !== null && listing.priceCurrency && (
+            <span className="ml-1.5 text-xs text-gray-400">{listing.priceCurrency}</span>
+          )}
+        </DetailField>
+
         <DetailField label="Quantity">
           {listing.quantity !== null
             ? `${listing.quantity}${listing.unitAbbreviation ? ` ${listing.unitAbbreviation}` : ''}`
@@ -130,6 +152,18 @@ export function ListingDetail({ listing, canEdit, canDelete, onEdit, onDelete }:
             <Badge variant="green">No</Badge>
           )}
         </DetailField>
+
+        {listing.soldAt && (
+          <DetailField label="Sold Date">
+            {formatDate(listing.soldAt)}
+          </DetailField>
+        )}
+
+        {listing.buyerName && (
+          <DetailField label="Buyer">
+            {listing.buyerName}
+          </DetailField>
+        )}
 
         {listing.expiresAt && (
           <DetailField label="Expires">

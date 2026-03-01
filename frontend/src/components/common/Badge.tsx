@@ -78,13 +78,14 @@ export function IntentBadge({ intent }: { intent: 'sell' | 'want' | 'unknown' })
 export function StatusBadge({
   status,
 }: {
-  status: 'active' | 'expired' | 'deleted' | 'pending_review';
+  status: 'active' | 'expired' | 'deleted' | 'pending_review' | 'sold';
 }) {
   const variantMap = {
     active: 'green',
     expired: 'gray',
     deleted: 'red',
     pending_review: 'yellow',
+    sold: 'red',
   } as const;
 
   const labelMap = {
@@ -92,6 +93,7 @@ export function StatusBadge({
     expired: 'Expired',
     deleted: 'Deleted',
     pending_review: 'Pending Review',
+    sold: 'Sold',
   };
 
   return (

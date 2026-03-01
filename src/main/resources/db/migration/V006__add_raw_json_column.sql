@@ -1,0 +1,1 @@
+ALTER TABLE raw_messages ADD COLUMN IF NOT EXISTS raw_json TEXT;

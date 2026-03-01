@@ -45,6 +45,9 @@ public class User {
     @Column(name = "role", nullable = false)
     private UserRole role = UserRole.user;
 
+    @Column(name = "password_hash")
+    private String passwordHash;
+
     @Column(name = "is_active", nullable = false)
     private Boolean isActive = true;
 
@@ -136,5 +139,13 @@ public class User {
 
     public void setLastLoginAt(OffsetDateTime lastLoginAt) {
         this.lastLoginAt = lastLoginAt;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String passwordHash) {
+        this.passwordHash = passwordHash;
     }
 }

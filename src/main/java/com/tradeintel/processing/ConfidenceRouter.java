@@ -137,9 +137,12 @@ public class ConfidenceRouter {
                 listing.setQuantity(BigDecimal.valueOf(item.getQuantity()));
             }
 
-            // Price
+            // Price and currency
             if (item.getPrice() != null) {
                 listing.setPrice(BigDecimal.valueOf(item.getPrice()));
+            }
+            if (item.getCurrency() != null && !item.getCurrency().isBlank()) {
+                listing.setPriceCurrency(item.getCurrency().trim().toUpperCase());
             }
 
             // Confidence routing

@@ -104,6 +104,14 @@ export function MessageThread({
 
   const groups = groupMessagesByDate(messages);
 
+  // Build a lookup map by whapiMsgId so we can resolve quoted messages
+  const messageByWhapiId = new Map<string, ReplayMessage>();
+  for (const msg of messages) {
+    if (msg.whapiMsgId) {
+      messageByWhapiId.set(msg.whapiMsgId, msg);
+    }
+  }
+
   return (
     <div
       ref={containerRef}
@@ -147,6 +155,7 @@ export function MessageThread({
               >
                 <MessageBubble
                   message={message}
+                  quotedMessage={message.replyToMsgId ? messageByWhapiId.get(message.replyToMsgId) ?? null : null}
                   isSearchResult={isHighlighted}
                   highlightText={isHighlighted ? highlightText : undefined}
                 />

@@ -208,6 +208,7 @@ public class ListingService {
     @Transactional(readOnly = true)
     public ListingStatsDTO getStats() {
         long total = listingRepository.countByStatusAndNotDeleted(ListingStatus.active)
+                + listingRepository.countByStatusAndNotDeleted(ListingStatus.sold)
                 + listingRepository.countByStatusAndNotDeleted(ListingStatus.pending_review)
                 + listingRepository.countByStatusAndNotDeleted(ListingStatus.expired);
 
@@ -219,6 +220,7 @@ public class ListingService {
 
         Map<String, Long> byStatus = Map.of(
                 ListingStatus.active.name(), listingRepository.countByStatus(ListingStatus.active),
+                ListingStatus.sold.name(), listingRepository.countByStatus(ListingStatus.sold),
                 ListingStatus.expired.name(), listingRepository.countByStatus(ListingStatus.expired),
                 ListingStatus.deleted.name(), listingRepository.countByStatus(ListingStatus.deleted),
                 ListingStatus.pending_review.name(), listingRepository.countByStatus(ListingStatus.pending_review)

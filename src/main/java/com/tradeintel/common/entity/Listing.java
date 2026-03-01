@@ -156,6 +156,22 @@ public class Listing {
     @Column(name = "expires_at")
     private OffsetDateTime expiresAt;
 
+    // Sold tracking ----------------------------------------------------------
+
+    /** Timestamp when the listing was marked as sold. */
+    @Column(name = "sold_at")
+    private OffsetDateTime soldAt;
+
+    /** Whapi message ID of the "sold" reply, for traceability. */
+    @Column(name = "sold_message_id")
+    private String soldMessageId;
+
+    /** Name of the buyer (sender of the "sold" reply, if different from listing seller). */
+    @Column(name = "buyer_name")
+    private String buyerName;
+
+    // Soft delete --------------------------------------------------------------
+
     /** Soft-delete timestamp; null means the listing is not deleted. */
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
@@ -390,5 +406,29 @@ public class Listing {
 
     public void setDeletedBy(User deletedBy) {
         this.deletedBy = deletedBy;
+    }
+
+    public OffsetDateTime getSoldAt() {
+        return soldAt;
+    }
+
+    public void setSoldAt(OffsetDateTime soldAt) {
+        this.soldAt = soldAt;
+    }
+
+    public String getSoldMessageId() {
+        return soldMessageId;
+    }
+
+    public void setSoldMessageId(String soldMessageId) {
+        this.soldMessageId = soldMessageId;
+    }
+
+    public String getBuyerName() {
+        return buyerName;
+    }
+
+    public void setBuyerName(String buyerName) {
+        this.buyerName = buyerName;
     }
 }

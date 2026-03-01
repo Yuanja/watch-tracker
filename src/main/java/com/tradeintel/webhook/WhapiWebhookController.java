@@ -46,8 +46,15 @@ public class WhapiWebhookController {
                 return ResponseEntity.ok().build();
             }
 
-            for (WhapiMessageDTO.Message msg : payload.getMessages()) {
-                RawMessage saved = archiveService.archive(msg);
+            com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(rawBody);
+            com.fasterxml.jackson.databind.JsonNode messagesNode = root.get("messages");
+
+            for (int i = 0; i < payload.getMessages().size(); i++) {
+                WhapiMessageDTO.Message msg = payload.getMessages().get(i);
+                String msgJson = (messagesNode != null && messagesNode.has(i))
+                        ? mapper.writerWithDefaultPrettyPrinter().writeValueAsString(messagesNode.get(i))
+                        : null;
+                RawMessage saved = archiveService.archive(msg, msgJson);
                 if (saved != null) {
                     log.info("Archived message: {}", saved.getWhapiMsgId());
                     eventPublisher.publishEvent(new NewMessageEvent(saved.getId()));

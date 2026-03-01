@@ -18,6 +18,13 @@ export interface ExtractedListingRef {
   intent: 'sell' | 'want' | 'unknown';
   itemDescription: string;
   confidenceScore: number;
+  partNumber?: string | null;
+  manufacturerName?: string | null;
+  price?: number | null;
+  conditionName?: string | null;
+  status?: string | null;
+  soldAt?: string | null;
+  buyerName?: string | null;
 }
 
 export interface ReplayMessage {
@@ -37,6 +44,7 @@ export interface ReplayMessage {
   isForwarded: boolean;
   timestampWa: string;
   processed: boolean;
+  rawJson: string | null;
   extractedListing?: ExtractedListingRef | null;
 }
 

@@ -4,6 +4,9 @@ import com.tradeintel.common.entity.ReviewQueueItem;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -53,4 +56,8 @@ public interface ReviewQueueItemRepository extends JpaRepository<ReviewQueueItem
      * @return list of review items for the listing
      */
     List<ReviewQueueItem> findByListingId(UUID listingId);
+
+    @Modifying
+    @Query("DELETE FROM ReviewQueueItem r WHERE r.listing.id IN :listingIds")
+    int deleteByListingIdIn(@Param("listingIds") List<UUID> listingIds);
 }

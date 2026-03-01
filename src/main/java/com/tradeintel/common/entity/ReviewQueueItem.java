@@ -10,6 +10,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -63,6 +65,7 @@ public class ReviewQueueItem {
      * The admin can choose to accept, modify, or ignore these suggestions.
      * Stored as JSONB; callers use Jackson for (de)serialisation.
      */
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "suggested_values", columnDefinition = "jsonb")
     private String suggestedValues;
 
@@ -82,6 +85,7 @@ public class ReviewQueueItem {
      * JSON object capturing the admin's resolution (approved fields, rejection reason, etc.).
      * Stored as JSONB; callers use Jackson for (de)serialisation.
      */
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "resolution", columnDefinition = "jsonb")
     private String resolution;
 

@@ -108,6 +108,13 @@
             <version>0.1.6</version>
         </dependency>
 
+        <!-- Hibernate pgvector type support (SqlTypes.VECTOR -> vector column) -->
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-vector</artifactId>
+            <version>6.5.3.Final</version>
+        </dependency>
+
         <!-- Flyway -->
         <dependency>
             <groupId>org.flywaydb</groupId>

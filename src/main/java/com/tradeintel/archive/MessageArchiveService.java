@@ -2,6 +2,7 @@ package com.tradeintel.archive;
 
 import com.tradeintel.common.entity.RawMessage;
 import com.tradeintel.common.entity.WhatsappGroup;
+import com.tradeintel.webhook.WhapiApiClient;
 import com.tradeintel.webhook.WhapiMessageDTO;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,17 +22,25 @@ public class MessageArchiveService {
     private final RawMessageRepository rawMessageRepository;
     private final WhatsappGroupRepository groupRepository;
     private final MediaDownloadService mediaDownloadService;
+    private final WhapiApiClient whapiApiClient;
 
     public MessageArchiveService(RawMessageRepository rawMessageRepository,
                                  WhatsappGroupRepository groupRepository,
-                                 MediaDownloadService mediaDownloadService) {
+                                 MediaDownloadService mediaDownloadService,
+                                 WhapiApiClient whapiApiClient) {
         this.rawMessageRepository = rawMessageRepository;
         this.groupRepository = groupRepository;
         this.mediaDownloadService = mediaDownloadService;
+        this.whapiApiClient = whapiApiClient;
     }
 
     @Transactional
     public RawMessage archive(WhapiMessageDTO.Message msg) {
+        return archive(msg, null);
+    }
+
+    @Transactional
+    public RawMessage archive(WhapiMessageDTO.Message msg, String rawJson) {
         if (msg.getId() == null || msg.getChatId() == null) {
             log.warn("Skipping message with null id or chatId");
             return null;
@@ -48,8 +57,17 @@ public class MessageArchiveService {
                 .orElseGet(() -> {
                     WhatsappGroup newGroup = new WhatsappGroup();
                     newGroup.setWhapiGroupId(msg.getChatId());
-                    newGroup.setGroupName(msg.getChatId()); // Will be updated later
                     newGroup.setIsActive(true);
+
+                    // Resolve friendly name from Whapi API
+                    WhapiApiClient.GroupInfo info = whapiApiClient.resolveGroupInfo(msg.getChatId());
+                    if (info != null) {
+                        newGroup.setGroupName(info.name() + " (" + msg.getChatId() + ")");
+                        newGroup.setAvatarUrl(info.avatarUrl());
+                    } else {
+                        newGroup.setGroupName(msg.getChatId());
+                    }
+
                     return groupRepository.save(newGroup);
                 });
 
@@ -63,10 +81,11 @@ public class MessageArchiveService {
         rawMessage.setMediaUrl(msg.getMediaUrl());
         rawMessage.setMediaMimeType(msg.getMediaMimeType());
         rawMessage.setIsForwarded(msg.isForwarded());
+        rawMessage.setRawJson(rawJson);
         rawMessage.setProcessed(false);
 
-        if (msg.getQuotedMsg() != null) {
-            rawMessage.setReplyToMsgId(msg.getQuotedMsg().getId());
+        if (msg.getQuotedMsgId() != null) {
+            rawMessage.setReplyToMsgId(msg.getQuotedMsgId());
         }
 
         if (msg.getTimestamp() != null) {

@@ -56,6 +56,11 @@ public class ListingDTO {
     private String reviewedByName;
     private OffsetDateTime reviewedAt;
 
+    // Sold tracking
+    private OffsetDateTime soldAt;
+    private String soldMessageId;
+    private String buyerName;
+
     // Lifecycle
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
@@ -129,6 +134,11 @@ public class ListingDTO {
             dto.reviewedByName = listing.getReviewedBy().getDisplayName();
         }
         dto.reviewedAt = listing.getReviewedAt();
+
+        // Sold tracking
+        dto.soldAt = listing.getSoldAt();
+        dto.soldMessageId = listing.getSoldMessageId();
+        dto.buyerName = listing.getBuyerName();
 
         // Lifecycle
         dto.createdAt = listing.getCreatedAt();
@@ -408,5 +418,29 @@ public class ListingDTO {
 
     public void setDeletedById(UUID deletedById) {
         this.deletedById = deletedById;
+    }
+
+    public OffsetDateTime getSoldAt() {
+        return soldAt;
+    }
+
+    public void setSoldAt(OffsetDateTime soldAt) {
+        this.soldAt = soldAt;
+    }
+
+    public String getSoldMessageId() {
+        return soldMessageId;
+    }
+
+    public void setSoldMessageId(String soldMessageId) {
+        this.soldMessageId = soldMessageId;
+    }
+
+    public String getBuyerName() {
+        return buyerName;
+    }
+
+    public void setBuyerName(String buyerName) {
+        this.buyerName = buyerName;
     }
 }

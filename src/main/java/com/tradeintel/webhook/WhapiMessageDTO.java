@@ -58,8 +58,8 @@ public class WhapiMessageDTO {
         @JsonProperty("forwarded")
         private boolean forwarded;
 
-        @JsonProperty("quoted_msg")
-        private QuotedMessage quotedMsg;
+        @JsonProperty("context")
+        private MessageContext context;
 
         public String getId() { return id; }
         public void setId(String id) { this.id = id; }
@@ -85,8 +85,12 @@ public class WhapiMessageDTO {
         public void setFromMe(boolean fromMe) { this.fromMe = fromMe; }
         public boolean isForwarded() { return forwarded; }
         public void setForwarded(boolean forwarded) { this.forwarded = forwarded; }
-        public QuotedMessage getQuotedMsg() { return quotedMsg; }
-        public void setQuotedMsg(QuotedMessage quotedMsg) { this.quotedMsg = quotedMsg; }
+        public MessageContext getContext() { return context; }
+        public void setContext(MessageContext context) { this.context = context; }
+
+        public String getQuotedMsgId() {
+            return context != null ? context.getQuotedId() : null;
+        }
 
         public String getMessageBody() {
             if (text != null && text.getBody() != null) {
@@ -152,11 +156,16 @@ public class WhapiMessageDTO {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class QuotedMessage {
-        @JsonProperty("id")
-        private String id;
+    public static class MessageContext {
+        @JsonProperty("quoted_id")
+        private String quotedId;
 
-        public String getId() { return id; }
-        public void setId(String id) { this.id = id; }
+        @JsonProperty("quoted_author")
+        private String quotedAuthor;
+
+        public String getQuotedId() { return quotedId; }
+        public void setQuotedId(String quotedId) { this.quotedId = quotedId; }
+        public String getQuotedAuthor() { return quotedAuthor; }
+        public void setQuotedAuthor(String quotedAuthor) { this.quotedAuthor = quotedAuthor; }
     }
 }

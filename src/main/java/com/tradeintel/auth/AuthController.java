@@ -5,11 +5,15 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -34,10 +38,13 @@ public class AuthController {
 
     private final UserRepository   userRepository;
     private final JwtTokenProvider tokenProvider;
+    private final PasswordEncoder  passwordEncoder;
 
-    public AuthController(UserRepository userRepository, JwtTokenProvider tokenProvider) {
-        this.userRepository = userRepository;
-        this.tokenProvider  = tokenProvider;
+    public AuthController(UserRepository userRepository, JwtTokenProvider tokenProvider,
+                          PasswordEncoder passwordEncoder) {
+        this.userRepository  = userRepository;
+        this.tokenProvider   = tokenProvider;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // -------------------------------------------------------------------------
@@ -66,6 +73,39 @@ public class AuthController {
         log.debug("GET /api/auth/me for userId={}", user.getId());
 
         return ResponseEntity.ok(UserProfileResponse.from(user));
+    }
+
+    // -------------------------------------------------------------------------
+    // POST /api/auth/login — simple username/password login for testing
+    // -------------------------------------------------------------------------
+
+    public record LoginRequest(String username, String password) {}
+
+    @PostMapping("/login")
+    public ResponseEntity<?> login(@RequestBody LoginRequest request) {
+        if (request.username() == null || request.password() == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "username and password required"));
+        }
+
+        // Look up by email (username is stored as email "admin@tradeintel.local")
+        String email = request.username().contains("@")
+                ? request.username()
+                : request.username() + "@tradeintel.local";
+
+        return userRepository.findByEmail(email)
+                .filter(user -> user.getPasswordHash() != null
+                        && passwordEncoder.matches(request.password(), user.getPasswordHash()))
+                .map(user -> {
+                    user.setLastLoginAt(OffsetDateTime.now());
+                    userRepository.save(user);
+                    String token = tokenProvider.generateToken(user);
+                    log.info("Password login successful for user={}", user.getEmail());
+                    return ResponseEntity.ok(Map.of("token", token));
+                })
+                .orElseGet(() -> {
+                    log.warn("Failed password login attempt for username={}", request.username());
+                    return ResponseEntity.status(401).body(Map.of("error", "invalid credentials"));
+                });
     }
 
     // -------------------------------------------------------------------------

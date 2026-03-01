@@ -1,5 +1,5 @@
 export type ListingIntent = 'sell' | 'want' | 'unknown';
-export type ListingStatus = 'active' | 'expired' | 'deleted' | 'pending_review';
+export type ListingStatus = 'active' | 'expired' | 'deleted' | 'pending_review' | 'sold';
 
 export interface Listing {
   id: string;
@@ -36,6 +36,11 @@ export interface Listing {
   needsHumanReview: boolean;
   reviewedByName: string | null;
   reviewedAt: string | null;
+
+  // Sold tracking
+  soldAt: string | null;
+  soldMessageId: string | null;
+  buyerName: string | null;
 
   // Lifecycle
   createdAt: string;

@@ -97,6 +97,11 @@ public class RawMessage {
     @Column(name = "processing_error", columnDefinition = "text")
     private String processingError;
 
+    // Raw webhook JSON ---------------------------------------------------------
+
+    @Column(name = "raw_json", columnDefinition = "text")
+    private String rawJson;
+
     // Semantic embedding -------------------------------------------------------
 
     /**
@@ -271,5 +276,13 @@ public class RawMessage {
 
     public void setEmbedding(float[] embedding) {
         this.embedding = embedding;
+    }
+
+    public String getRawJson() {
+        return rawJson;
+    }
+
+    public void setRawJson(String rawJson) {
+        this.rawJson = rawJson;
     }
 }

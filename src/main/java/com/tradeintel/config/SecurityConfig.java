@@ -68,7 +68,7 @@ public class SecurityConfig {
     public SecurityConfig(JwtAuthFilter           jwtAuthFilter,
                           GoogleOAuth2UserService  oAuth2UserService,
                           OAuth2SuccessHandler     oAuth2SuccessHandler,
-                          @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
+                          @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000,http://localhost:8080}")
                           List<String>             allowedOrigins) {
         this.jwtAuthFilter       = jwtAuthFilter;
         this.oAuth2UserService   = oAuth2UserService;
@@ -115,6 +115,12 @@ public class SecurityConfig {
                 // Public: Actuator health check (useful for load balancer probes)
                 .requestMatchers("/actuator/health").permitAll()
 
+                // Public: SPA static assets and index.html
+                .requestMatchers("/", "/index.html", "/assets/**", "/favicon.ico").permitAll()
+
+                // Public: media files (img/video tags can't send Authorization header)
+                .requestMatchers("/api/media/**").permitAll()
+
                 // Admin+ only
                 .requestMatchers("/api/review/**").hasRole("ADMIN")
                 .requestMatchers("/api/normalize/**").hasRole("ADMIN")
@@ -130,6 +136,9 @@ public class SecurityConfig {
                         "/api/notifications/**",
                         "/api/messages/**"
                 ).authenticated()
+
+                // SPA error fallback (serves index.html for unknown routes)
+                .requestMatchers("/error").permitAll()
 
                 // Catch-all — any unmatched API request requires authentication
                 .anyRequest().authenticated()
@@ -147,6 +156,7 @@ public class SecurityConfig {
 
             // OAuth2 login configuration
             .oauth2Login(oauth2 -> oauth2
+                .loginPage("/login")
                 .userInfoEndpoint(userInfo ->
                     userInfo.userService(oAuth2UserService))
                 .successHandler(oAuth2SuccessHandler)
@@ -174,7 +184,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
 
-        config.setAllowedOrigins(allowedOrigins);
+        config.setAllowedOriginPatterns(List.of("*"));
 
         config.setAllowedMethods(List.of(
                 HttpMethod.GET.name(),

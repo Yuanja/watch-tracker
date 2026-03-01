@@ -13,7 +13,11 @@ public final class WhapiSignatureValidator {
     private WhapiSignatureValidator() {}
 
     public static boolean isValid(String rawBody, String signature, String webhookSecret) {
-        if (signature == null || signature.isBlank() || webhookSecret == null || webhookSecret.isBlank()) {
+        // If no webhook secret is configured (or set to "placeholder"), skip signature validation
+        if (webhookSecret == null || webhookSecret.isBlank() || "placeholder".equals(webhookSecret)) {
+            return true;
+        }
+        if (signature == null || signature.isBlank()) {
             return false;
         }
         try {

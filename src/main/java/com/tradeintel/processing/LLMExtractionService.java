@@ -99,11 +99,75 @@ public class LLMExtractionService {
             log.debug("LLM extraction response content: {}",
                     content.length() > 200 ? content.substring(0, 200) + "..." : content);
 
-            return parseResponse(content);
+            ExtractionResult result = parseResponse(content);
+            result.setInputTokens(response.inputTokens());
+            result.setOutputTokens(response.outputTokens());
+            result.setEstimatedCostUsd(response.estimateCost());
+            result.setModelUsed(extractionModel);
+            return result;
 
         } catch (Exception e) {
             log.error("LLM extraction failed for text: {}",
                     expandedText.length() > 100 ? expandedText.substring(0, 100) + "..." : expandedText, e);
+            return buildFallbackResult();
+        }
+    }
+
+    /**
+     * Re-extracts structured listing data using the original text plus a human hint
+     * and the previous extraction result. Used for iterative agent-assisted review.
+     *
+     * @param originalText       the original WhatsApp message text
+     * @param previousExtraction JSON string of the previous {@link ExtractionResult}
+     * @param humanHint          natural-language guidance from the reviewer
+     * @return a refined extraction result
+     */
+    public ExtractionResult extractWithHint(String originalText, String previousExtraction, String humanHint) {
+        if (originalText == null || originalText.isBlank()) {
+            log.warn("Empty text provided for hint-based extraction; returning fallback");
+            return buildFallbackResult();
+        }
+
+        try {
+            String categoriesCSV = categoryService.getAllNamesAsCSV();
+            String manufacturersCSV = manufacturerService.getAllNamesWithAliasesAsCSV();
+            String jargonCSV = jargonService.getVerifiedAsCSV();
+
+            String formattedPrompt = String.format(
+                    promptTemplate,
+                    categoriesCSV,
+                    manufacturersCSV,
+                    jargonCSV,
+                    originalText
+            );
+
+            String hintAddendum = "\n\n--- PREVIOUS EXTRACTION ---\n" + previousExtraction
+                    + "\n\n--- REVIEWER HINT ---\n" + humanHint
+                    + "\n\nPlease re-extract the message above, taking the reviewer's hint into account. "
+                    + "Correct any mistakes from the previous extraction based on the hint. "
+                    + "Return the same JSON format as before.";
+
+            List<ChatMessage> messages = List.of(
+                    new ChatMessage("user", formattedPrompt + hintAddendum)
+            );
+
+            ChatCompletionResponse response = openAIClient.chatCompletion(
+                    extractionModel, messages, 0.1
+            );
+
+            String content = response.content();
+            log.info("LLM hint extraction: model={}, inputTokens={}, outputTokens={}",
+                    extractionModel, response.inputTokens(), response.outputTokens());
+
+            ExtractionResult result = parseResponse(content);
+            result.setInputTokens(response.inputTokens());
+            result.setOutputTokens(response.outputTokens());
+            result.setEstimatedCostUsd(response.estimateCost());
+            result.setModelUsed(extractionModel);
+            return result;
+
+        } catch (Exception e) {
+            log.error("LLM hint-based extraction failed: {}", e.getMessage(), e);
             return buildFallbackResult();
         }
     }

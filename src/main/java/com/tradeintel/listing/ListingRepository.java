@@ -12,8 +12,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import org.springframework.data.jpa.repository.EntityGraph;
+
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -86,4 +89,23 @@ public interface ListingRepository extends JpaRepository<Listing, UUID>, JpaSpec
     @Query("UPDATE Listing l SET l.status = 'expired' " +
            "WHERE l.status = 'active' AND l.expiresAt IS NOT NULL AND l.expiresAt < :now")
     int expireListingsBefore(@Param("now") OffsetDateTime now);
+
+    @EntityGraph(attributePaths = {"manufacturer", "condition"})
+    @Query("SELECT l FROM Listing l WHERE l.rawMessage.id IN :messageIds AND l.deletedAt IS NULL")
+    List<Listing> findByRawMessageIdInAndDeletedAtIsNull(@Param("messageIds") List<UUID> messageIds);
+
+    /**
+     * Finds a non-deleted listing that was extracted from a raw message with the given whapi message ID.
+     * Used to locate the original listing when a "sold" reply references it.
+     */
+    @EntityGraph(attributePaths = {"manufacturer", "condition"})
+    @Query("SELECT l FROM Listing l WHERE l.rawMessage.whapiMsgId = :whapiMsgId AND l.deletedAt IS NULL")
+    Optional<Listing> findByRawMessageWhapiMsgId(@Param("whapiMsgId") String whapiMsgId);
+
+    @Query("SELECT l.id FROM Listing l WHERE l.status IN :statuses AND l.deletedAt IS NULL")
+    List<UUID> findIdsByStatusIn(@Param("statuses") List<ListingStatus> statuses);
+
+    @Modifying
+    @Query("DELETE FROM Listing l WHERE l.status IN :statuses AND l.deletedAt IS NULL")
+    int deleteByStatusIn(@Param("statuses") List<ListingStatus> statuses);
 }

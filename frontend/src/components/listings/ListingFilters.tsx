@@ -11,6 +11,7 @@ const INTENT_OPTIONS: { value: ListingIntent | ''; label: string }[] = [
 const STATUS_OPTIONS: { value: ListingStatus | ''; label: string }[] = [
   { value: '', label: 'All Statuses' },
   { value: 'active', label: 'Active' },
+  { value: 'sold', label: 'Sold' },
   { value: 'pending_review', label: 'Pending Review' },
   { value: 'expired', label: 'Expired' },
   { value: 'deleted', label: 'Deleted' },

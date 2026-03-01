@@ -54,3 +54,38 @@ export async function skipReviewItem(id: string): Promise<ReviewQueueItem> {
   );
   return response.data;
 }
+
+export interface ExtractionItem {
+  description?: string;
+  category?: string;
+  manufacturer?: string;
+  part_number?: string;
+  quantity?: number;
+  unit?: string;
+  price?: number;
+  currency?: string;
+  condition?: string;
+}
+
+export interface ExtractionResult {
+  intent?: string;
+  items?: ExtractionItem[];
+  unknown_terms?: string[];
+  confidence?: number;
+}
+
+export interface AssistResponse {
+  extraction: ExtractionResult;
+  originalText: string;
+}
+
+export async function assistByListing(
+  listingId: string,
+  hint: string
+): Promise<AssistResponse> {
+  const response = await apiClient.post<AssistResponse>(
+    `/review/listing/${listingId}/assist`,
+    { hint }
+  );
+  return response.data;
+}

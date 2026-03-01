@@ -94,13 +94,16 @@ public final class ListingSpecification {
                         root.get("createdAt"), request.getCreatedBefore()));
             }
 
-            // Status filter — default to active when not specified
+            // Status filter — when specified, filter to that status;
+            // when omitted, show all non-deleted statuses (active, sold, pending_review, expired)
             if (request.getStatus() != null) {
                 predicates.add(cb.equal(root.get("status"), request.getStatus()));
             } else {
-                predicates.add(cb.equal(
-                        root.get("status"),
-                        com.tradeintel.common.entity.ListingStatus.active));
+                predicates.add(root.get("status").in(
+                        com.tradeintel.common.entity.ListingStatus.active,
+                        com.tradeintel.common.entity.ListingStatus.sold,
+                        com.tradeintel.common.entity.ListingStatus.pending_review,
+                        com.tradeintel.common.entity.ListingStatus.expired));
             }
 
             // Keyword search: case-insensitive LIKE on description and part number

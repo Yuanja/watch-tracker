@@ -16,7 +16,10 @@ import com.tradeintel.normalize.CategoryRepository;
 import com.tradeintel.normalize.ConditionRepository;
 import com.tradeintel.normalize.ManufacturerRepository;
 import com.tradeintel.normalize.UnitRepository;
+import com.tradeintel.processing.ExtractionResult;
+import com.tradeintel.processing.LLMExtractionService;
 import com.tradeintel.processing.ReviewQueueItemRepository;
+import com.tradeintel.review.dto.AssistResponse;
 import com.tradeintel.review.dto.ResolutionRequest;
 import com.tradeintel.review.dto.ReviewItemDTO;
 import org.apache.logging.log4j.LogManager;
@@ -28,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -50,6 +54,8 @@ public class ReviewService {
     private final UnitRepository unitRepository;
     private final ConditionRepository conditionRepository;
     private final AuditService auditService;
+    private final LLMExtractionService llmExtractionService;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
 
     public ReviewService(ReviewQueueItemRepository reviewQueueItemRepository,
                          ListingRepository listingRepository,
@@ -57,7 +63,8 @@ public class ReviewService {
                          ManufacturerRepository manufacturerRepository,
                          UnitRepository unitRepository,
                          ConditionRepository conditionRepository,
-                         AuditService auditService) {
+                         AuditService auditService,
+                         LLMExtractionService llmExtractionService) {
         this.reviewQueueItemRepository = reviewQueueItemRepository;
         this.listingRepository = listingRepository;
         this.categoryRepository = categoryRepository;
@@ -65,6 +72,8 @@ public class ReviewService {
         this.unitRepository = unitRepository;
         this.conditionRepository = conditionRepository;
         this.auditService = auditService;
+        this.llmExtractionService = llmExtractionService;
+        this.objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
     }
 
     // -------------------------------------------------------------------------
@@ -177,6 +186,52 @@ public class ReviewService {
         log.info("Skipped review item {} by user {}", id, resolver.getId());
         auditService.log(resolver.getId(), "review.skip", "ReviewQueueItem", id, null, null, null);
         return ReviewItemDTO.fromEntity(saved);
+    }
+
+    // -------------------------------------------------------------------------
+    // Agent-assisted review
+    // -------------------------------------------------------------------------
+
+    /**
+     * Uses the LLM to refine extraction for a listing based on an admin's hint.
+     * Looks up the pending review queue item for the given listing, sends the
+     * original text plus the hint to the LLM, and persists the updated
+     * suggested values for iterative refinement.
+     *
+     * @param listingId the listing UUID
+     * @param hint      the reviewer's natural-language guidance
+     * @return the refined extraction result with original text
+     * @throws ResourceNotFoundException if no pending review item exists for the listing
+     */
+    public AssistResponse assistByListing(UUID listingId, String hint) {
+        List<ReviewQueueItem> items = reviewQueueItemRepository.findByListingId(listingId);
+        ReviewQueueItem item = items.stream()
+                .filter(i -> "pending".equals(i.getStatus()))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "No pending review item for listing " + listingId));
+
+        String originalText = item.getRawMessage() != null
+                ? item.getRawMessage().getMessageBody() : "";
+        String previousExtraction = item.getSuggestedValues() != null
+                ? item.getSuggestedValues() : "{}";
+
+        ExtractionResult result = llmExtractionService.extractWithHint(
+                originalText, previousExtraction, hint);
+
+        // Persist updated suggested values for iterative refinement
+        try {
+            String updatedJson = objectMapper.writeValueAsString(result);
+            item.setSuggestedValues(updatedJson);
+            reviewQueueItemRepository.save(item);
+        } catch (Exception e) {
+            log.warn("Failed to persist updated suggested values for listing {}: {}",
+                    listingId, e.getMessage());
+        }
+
+        log.info("Agent-assisted extraction for listing {}: confidence={}",
+                listingId, result.getConfidence());
+        return new AssistResponse(result, originalText);
     }
 
     // -------------------------------------------------------------------------

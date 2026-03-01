@@ -19,6 +19,14 @@ export function loginWithGoogle(): void {
 }
 
 /**
+ * Simple username/password login for testing.
+ */
+export async function loginWithPassword(username: string, password: string): Promise<string> {
+  const response = await apiClient.post<{ token: string }>('/auth/login', { username, password });
+  return response.data.token;
+}
+
+/**
  * Logout — no backend call needed for stateless JWT; just clear local storage.
  */
 export async function logout(): Promise<void> {

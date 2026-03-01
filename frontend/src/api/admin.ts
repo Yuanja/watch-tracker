@@ -127,3 +127,61 @@ export async function updateGroup(
 export async function deleteGroup(id: string): Promise<void> {
   await apiClient.delete(`/admin/groups/${id}`);
 }
+
+// ---- Catchup Processing ----
+
+export interface CatchupResponse {
+  queued?: number;
+  message?: string;
+  error?: string;
+}
+
+export interface CatchupStatus {
+  running: boolean;
+  unprocessedRemaining: number;
+}
+
+export async function runCatchup(): Promise<CatchupResponse> {
+  const response = await apiClient.post<CatchupResponse>(
+    '/admin/processing/catchup'
+  );
+  return response.data;
+}
+
+export async function getCatchupStatus(): Promise<CatchupStatus> {
+  const response = await apiClient.get<CatchupStatus>(
+    '/admin/processing/catchup/status'
+  );
+  return response.data;
+}
+
+// ---- Reprocessing ----
+
+export interface ReprocessResponse {
+  listingsDeleted?: number;
+  reviewItemsDeleted?: number;
+  messagesReset?: number;
+  message?: string;
+  error?: string;
+}
+
+export interface ProcessingStats {
+  totalMessages: number;
+  processedMessages: number;
+  unprocessedMessages: number;
+  catchupRunning: boolean;
+}
+
+export async function reprocessAll(): Promise<ReprocessResponse> {
+  const response = await apiClient.post<ReprocessResponse>(
+    '/admin/processing/reprocess'
+  );
+  return response.data;
+}
+
+export async function getProcessingStats(): Promise<ProcessingStats> {
+  const response = await apiClient.get<ProcessingStats>(
+    '/admin/processing/stats'
+  );
+  return response.data;
+}

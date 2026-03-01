@@ -9,6 +9,7 @@ import { ConfirmDialog } from '../common/ConfirmDialog';
 import { ListingCard } from './ListingCard';
 import { ListingDetail } from './ListingDetail';
 import { ListingEditModal } from './ListingEditModal';
+import { AssistDialog } from '../review/AssistDialog';
 
 interface ListingsViewProps {
   listings: Listing[];
@@ -35,6 +36,7 @@ export function ListingsView({
   const queryClient = useQueryClient();
   const [editingListing, setEditingListing] = useState<Listing | null>(null);
   const [deletingListing, setDeletingListing] = useState<Listing | null>(null);
+  const [assistListingId, setAssistListingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   const isAdmin = user?.role === 'admin' || user?.role === 'uber_admin';
@@ -124,6 +126,9 @@ export function ListingsView({
               <th className="hidden px-4 py-3 font-medium text-gray-600 sm:table-cell">
                 Sender
               </th>
+              <th className="hidden px-4 py-3 font-medium text-gray-600 sm:table-cell">
+                Group
+              </th>
               <th className="hidden px-4 py-3 font-medium text-gray-600 md:table-cell">
                 Price
               </th>
@@ -141,10 +146,11 @@ export function ListingsView({
                   listing={listing}
                   isExpanded={expandedId === listing.id}
                   onToggle={() => onToggleExpand(listing.id)}
+                  onAssist={isAdmin ? () => setAssistListingId(listing.id) : undefined}
                 />
                 {expandedId === listing.id && (
                   <tr key={`${listing.id}-detail`}>
-                    <td colSpan={7} className="p-0">
+                    <td colSpan={8} className="p-0">
                       <ListingDetail
                         listing={listing}
                         canEdit={isAdmin}
@@ -196,6 +202,19 @@ export function ListingsView({
         onCancel={() => setDeletingListing(null)}
         isLoading={deleteMutation.isPending}
       />
+
+      {/* Agent-assisted review dialog */}
+      {assistListingId && (
+        <AssistDialog
+          listingId={assistListingId}
+          onClose={() => setAssistListingId(null)}
+          onResolved={() => {
+            setAssistListingId(null);
+            queryClient.invalidateQueries({ queryKey: ['listings'] });
+            queryClient.invalidateQueries({ queryKey: ['listing-stats'] });
+          }}
+        />
+      )}
     </>
   );
 }

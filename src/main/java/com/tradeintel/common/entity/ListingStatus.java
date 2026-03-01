@@ -10,5 +10,6 @@ public enum ListingStatus {
     active,
     expired,
     deleted,
-    pending_review
+    pending_review,
+    sold
 }

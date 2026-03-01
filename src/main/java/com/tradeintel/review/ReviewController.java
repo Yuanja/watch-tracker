@@ -2,6 +2,8 @@ package com.tradeintel.review;
 
 import com.tradeintel.auth.UserPrincipal;
 import com.tradeintel.common.security.AdminOnly;
+import com.tradeintel.review.dto.AssistRequest;
+import com.tradeintel.review.dto.AssistResponse;
 import com.tradeintel.review.dto.ResolutionRequest;
 import jakarta.validation.Valid;
 import com.tradeintel.review.dto.ReviewItemDTO;
@@ -96,5 +98,22 @@ public class ReviewController {
         log.info("POST /api/review/{}/skip by user {}", id, principal.getUserId());
         ReviewItemDTO result = reviewService.skip(id, principal.getUser());
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * Uses the LLM to refine extraction for a listing based on an admin's hint.
+     * Supports iterative refinement — each call builds on the previous extraction.
+     *
+     * @param listingId the UUID of the listing
+     * @param request   the admin's hint
+     * @return the refined extraction result with original text
+     */
+    @PostMapping("/listing/{listingId}/assist")
+    public ResponseEntity<AssistResponse> assist(
+            @PathVariable UUID listingId,
+            @Valid @RequestBody AssistRequest request) {
+        log.info("POST /api/review/listing/{}/assist", listingId);
+        AssistResponse response = reviewService.assistByListing(listingId, request.getHint());
+        return ResponseEntity.ok(response);
     }
 }
