@@ -15,6 +15,13 @@ import com.tradeintel.listing.dto.ListingSearchRequest;
 import com.tradeintel.listing.dto.ListingStatsDTO;
 import com.tradeintel.listing.dto.ListingUpdateRequest;
 import com.tradeintel.normalize.CategoryRepository;
+import com.tradeintel.normalize.ConditionRepository;
+import com.tradeintel.normalize.ManufacturerRepository;
+import com.tradeintel.normalize.UnitRepository;
+import com.tradeintel.processing.ExchangeRateService;
+import com.tradeintel.processing.ExtractionResult;
+import com.tradeintel.processing.LLMExtractionService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityManager;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,10 +34,16 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.tradeintel.listing.dto.CrossPostDTO;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * Service for listing CRUD, search, and soft-delete operations.
@@ -47,17 +60,34 @@ public class ListingService {
 
     private final ListingRepository listingRepository;
     private final CategoryRepository categoryRepository;
+    private final ManufacturerRepository manufacturerRepository;
+    private final UnitRepository unitRepository;
+    private final ConditionRepository conditionRepository;
     private final EntityManager entityManager;
     private final AuditService auditService;
+    private final LLMExtractionService llmExtractionService;
+    private final ExchangeRateService exchangeRateService;
+    private final ObjectMapper objectMapper;
 
     public ListingService(ListingRepository listingRepository,
                           CategoryRepository categoryRepository,
+                          ManufacturerRepository manufacturerRepository,
+                          UnitRepository unitRepository,
+                          ConditionRepository conditionRepository,
                           EntityManager entityManager,
-                          AuditService auditService) {
+                          AuditService auditService,
+                          LLMExtractionService llmExtractionService,
+                          ExchangeRateService exchangeRateService) {
         this.listingRepository = listingRepository;
         this.categoryRepository = categoryRepository;
+        this.manufacturerRepository = manufacturerRepository;
+        this.unitRepository = unitRepository;
+        this.conditionRepository = conditionRepository;
         this.entityManager = entityManager;
         this.auditService = auditService;
+        this.llmExtractionService = llmExtractionService;
+        this.exchangeRateService = exchangeRateService;
+        this.objectMapper = new ObjectMapper();
     }
 
     // -------------------------------------------------------------------------
@@ -164,6 +194,11 @@ public class ListingService {
             listing.setExpiresAt(request.getExpiresAt());
         }
 
+        // Recalculate exchange rate if price or currency changed
+        if (request.getPrice() != null || request.getPriceCurrency() != null) {
+            recalculateExchangeRate(listing);
+        }
+
         Listing saved = listingRepository.save(listing);
         log.info("Updated listing: id={}", saved.getId());
         auditService.log(null, "listing.update", "Listing", id, null, null, null);
@@ -228,6 +263,225 @@ public class ListingService {
 
         log.debug("Stats: total={}", total);
         return new ListingStatsDTO(total, byIntent, byStatus);
+    }
+
+    // -------------------------------------------------------------------------
+    // Retry extraction
+    // -------------------------------------------------------------------------
+
+    /**
+     * Re-runs LLM extraction on a listing's original text with an optional
+     * reviewer hint, then applies the result directly to the listing.
+     *
+     * @param id   the listing UUID
+     * @param hint optional natural-language guidance (may be null or blank)
+     * @return the updated listing as a DTO
+     */
+    public ListingDTO retryExtraction(UUID id, String hint) {
+        Listing listing = listingRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Listing", id));
+
+        String originalText = listing.getOriginalText();
+        if (originalText == null || originalText.isBlank()) {
+            throw new IllegalArgumentException("Listing has no original text to re-extract");
+        }
+
+        // Build a JSON snapshot of the current extraction for context
+        String previousExtraction = buildCurrentExtractionJson(listing);
+
+        ExtractionResult result;
+        if (hint != null && !hint.isBlank()) {
+            result = llmExtractionService.extractWithHint(originalText, previousExtraction, hint);
+        } else {
+            result = llmExtractionService.extract(originalText, originalText);
+        }
+
+        // Apply the first extracted item to the listing
+        applyExtraction(listing, result);
+
+        // Recalculate exchange rate after re-extraction
+        recalculateExchangeRate(listing);
+
+        Listing saved = listingRepository.save(listing);
+        log.info("Retry extraction for listing {}: confidence={}", id, result.getConfidence());
+        auditService.log(null, "listing.retry_extraction", "Listing", id, null, null, null);
+        return ListingDTO.fromEntity(saved);
+    }
+
+    private String buildCurrentExtractionJson(Listing listing) {
+        try {
+            Map<String, Object> current = Map.of(
+                    "intent", listing.getIntent() != null ? listing.getIntent().name() : "unknown",
+                    "confidence", listing.getConfidenceScore() != null ? listing.getConfidenceScore() : 0.0,
+                    "items", java.util.List.of(Map.of(
+                            "description", listing.getItemDescription() != null ? listing.getItemDescription() : "",
+                            "category", listing.getItemCategory() != null ? listing.getItemCategory().getName() : "",
+                            "manufacturer", listing.getManufacturer() != null ? listing.getManufacturer().getName() : "",
+                            "part_number", listing.getPartNumber() != null ? listing.getPartNumber() : "",
+                            "quantity", listing.getQuantity() != null ? listing.getQuantity() : "",
+                            "unit", listing.getUnit() != null ? listing.getUnit().getName() : "",
+                            "price", listing.getPrice() != null ? listing.getPrice() : "",
+                            "condition", listing.getCondition() != null ? listing.getCondition().getName() : ""
+                    ))
+            );
+            return objectMapper.writeValueAsString(current);
+        } catch (Exception e) {
+            return "{}";
+        }
+    }
+
+    private void applyExtraction(Listing listing, ExtractionResult result) {
+        if (result.getIntent() != null) {
+            try {
+                listing.setIntent(IntentType.valueOf(result.getIntent().toLowerCase()));
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid intent '{}' from retry extraction; keeping original", result.getIntent());
+            }
+        }
+        listing.setConfidenceScore(result.getConfidence());
+
+        if (result.getItems() != null && !result.getItems().isEmpty()) {
+            ExtractionResult.ExtractedItem item = result.getItems().get(0);
+
+            if (item.getDescription() != null && !item.getDescription().isBlank()) {
+                listing.setItemDescription(item.getDescription().trim());
+            }
+            if (item.getCategory() != null && !item.getCategory().isBlank()) {
+                categoryRepository.findByNameIgnoreCase(item.getCategory().trim())
+                        .ifPresent(listing::setItemCategory);
+            }
+            if (item.getManufacturer() != null && !item.getManufacturer().isBlank()) {
+                manufacturerRepository.findByNameIgnoreCase(item.getManufacturer().trim())
+                        .ifPresent(listing::setManufacturer);
+            }
+            if (item.getPartNumber() != null) {
+                listing.setPartNumber(item.getPartNumber().trim());
+            }
+            if (item.getQuantity() != null) {
+                listing.setQuantity(BigDecimal.valueOf(item.getQuantity()));
+            }
+            if (item.getUnit() != null && !item.getUnit().isBlank()) {
+                unitRepository.findByNameIgnoreCase(item.getUnit().trim())
+                        .or(() -> unitRepository.findByAbbreviationIgnoreCase(item.getUnit().trim()))
+                        .ifPresent(listing::setUnit);
+            }
+            if (item.getPrice() != null) {
+                listing.setPrice(BigDecimal.valueOf(item.getPrice()));
+            }
+            if (item.getCurrency() != null && !item.getCurrency().isBlank()) {
+                listing.setPriceCurrency(item.getCurrency().trim().toUpperCase());
+            }
+            if (item.getCondition() != null && !item.getCondition().isBlank()) {
+                conditionRepository.findByNameIgnoreCase(item.getCondition().trim())
+                        .ifPresent(listing::setCondition);
+            }
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Cross-post detection
+    // -------------------------------------------------------------------------
+
+    /**
+     * Enriches a list of DTOs with cross-post counts in a single batch query.
+     * Non-fatal: if the query fails the DTOs are returned unchanged.
+     */
+    public void enrichWithCrossPostCounts(List<ListingDTO> dtos) {
+        try {
+            List<UUID> ids = dtos.stream().map(ListingDTO::getId).collect(Collectors.toList());
+            if (ids.isEmpty()) return;
+
+            Map<UUID, Integer> counts = listingRepository.countCrossPostsForListings(ids)
+                    .stream()
+                    .collect(Collectors.toMap(
+                            ListingRepository.CrossPostCountProjection::getListingId,
+                            ListingRepository.CrossPostCountProjection::getCrossPostCount
+                    ));
+
+            for (ListingDTO dto : dtos) {
+                dto.setCrossPostCount(counts.getOrDefault(dto.getId(), 0));
+            }
+        } catch (Exception e) {
+            log.warn("Cross-post count enrichment failed (non-fatal): {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Returns the cross-posts of a given listing (same sender + part# + price,
+     * different raw message).
+     */
+    @Transactional(readOnly = true)
+    public List<CrossPostDTO> getCrossPosts(UUID id) {
+        List<Listing> crossPosts = listingRepository.findCrossPostsOf(id);
+        return crossPosts.stream()
+                .map(CrossPostDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    // -------------------------------------------------------------------------
+    // Exchange rate helpers
+    // -------------------------------------------------------------------------
+
+    private void recalculateExchangeRate(Listing listing) {
+        try {
+            if (listing.getPrice() != null && listing.getPriceCurrency() != null) {
+                LocalDate rateDate = listing.getCreatedAt() != null
+                        ? listing.getCreatedAt().toLocalDate()
+                        : LocalDate.now();
+                BigDecimal rate = exchangeRateService.getRateToUsd(listing.getPriceCurrency(), rateDate);
+                if (rate != null) {
+                    listing.setExchangeRateToUsd(rate);
+                    listing.setPriceUsd(exchangeRateService.computeUsdPrice(
+                            listing.getPrice(), listing.getPriceCurrency(), rateDate));
+                }
+            } else {
+                listing.setExchangeRateToUsd(null);
+                listing.setPriceUsd(null);
+            }
+        } catch (Exception e) {
+            log.warn("Exchange rate recalculation failed for listing {} (non-fatal): {}",
+                    listing.getId(), e.getMessage());
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Backfill exchange rates (admin)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Backfills exchange rates for listings that have a price but no exchange rate.
+     *
+     * @return the number of listings updated
+     */
+    public int backfillExchangeRates() {
+        List<Listing> listings = listingRepository.findAll(
+                (root, query, cb) -> cb.and(
+                        cb.isNotNull(root.get("price")),
+                        cb.isNull(root.get("exchangeRateToUsd"))
+                )
+        );
+
+        int updated = 0;
+        for (Listing listing : listings) {
+            try {
+                LocalDate rateDate = listing.getCreatedAt() != null
+                        ? listing.getCreatedAt().toLocalDate()
+                        : LocalDate.now();
+                BigDecimal rate = exchangeRateService.getRateToUsd(listing.getPriceCurrency(), rateDate);
+                if (rate != null) {
+                    listing.setExchangeRateToUsd(rate);
+                    listing.setPriceUsd(exchangeRateService.computeUsdPrice(
+                            listing.getPrice(), listing.getPriceCurrency(), rateDate));
+                    listingRepository.save(listing);
+                    updated++;
+                }
+            } catch (Exception e) {
+                log.warn("Backfill failed for listing {}: {}", listing.getId(), e.getMessage());
+            }
+        }
+
+        log.info("Backfilled exchange rates for {} listings", updated);
+        return updated;
     }
 
     // -------------------------------------------------------------------------

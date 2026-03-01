@@ -97,6 +97,12 @@ public class Listing {
     @Column(name = "price_currency")
     private String priceCurrency = "USD";
 
+    @Column(name = "exchange_rate_to_usd", precision = 19, scale = 10)
+    private BigDecimal exchangeRateToUsd;
+
+    @Column(name = "price_usd", precision = 19, scale = 4)
+    private BigDecimal priceUsd;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "condition_id")
     private Condition condition;
@@ -294,6 +300,22 @@ public class Listing {
 
     public void setPriceCurrency(String priceCurrency) {
         this.priceCurrency = priceCurrency;
+    }
+
+    public BigDecimal getExchangeRateToUsd() {
+        return exchangeRateToUsd;
+    }
+
+    public void setExchangeRateToUsd(BigDecimal exchangeRateToUsd) {
+        this.exchangeRateToUsd = exchangeRateToUsd;
+    }
+
+    public BigDecimal getPriceUsd() {
+        return priceUsd;
+    }
+
+    public void setPriceUsd(BigDecimal priceUsd) {
+        this.priceUsd = priceUsd;
     }
 
     public Condition getCondition() {

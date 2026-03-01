@@ -23,6 +23,8 @@ export interface Listing {
   unitAbbreviation: string | null;
   price: number | null;
   priceCurrency: string;
+  exchangeRateToUsd: number | null;
+  priceUsd: number | null;
   conditionId: string | null;
   conditionName: string | null;
 
@@ -42,12 +44,29 @@ export interface Listing {
   soldMessageId: string | null;
   buyerName: string | null;
 
+  // Message timestamp (when WhatsApp message was sent)
+  messageTimestamp: string | null;
+
+  // Cross-post detection
+  crossPostCount: number;
+
   // Lifecycle
   createdAt: string;
   updatedAt: string;
   expiresAt: string | null;
   deletedAt: string | null;
   deletedById: string | null;
+}
+
+export interface CrossPost {
+  id: string;
+  groupName: string | null;
+  senderName: string | null;
+  price: number | null;
+  priceCurrency: string | null;
+  status: ListingStatus;
+  messageTimestamp: string | null;
+  createdAt: string;
 }
 
 export interface ListingSearchRequest {

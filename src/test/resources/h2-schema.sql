@@ -130,6 +130,8 @@ CREATE TABLE IF NOT EXISTS listings (
     unit_id            UUID,
     price              NUMERIC(19,4),
     price_currency     VARCHAR(10)   DEFAULT 'USD',
+    exchange_rate_to_usd NUMERIC(19,10),
+    price_usd          NUMERIC(19,4),
     condition_id       UUID,
     original_text      CLOB          NOT NULL,
     sender_name        VARCHAR(255),

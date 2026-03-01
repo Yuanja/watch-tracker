@@ -41,6 +41,9 @@ public class ListingDTO {
     private String unitAbbreviation;
     private BigDecimal price;
     private String priceCurrency;
+    private BigDecimal exchangeRateToUsd;
+    private BigDecimal priceUsd;
+    private int crossPostCount;
     private UUID conditionId;
     private String conditionName;
 
@@ -60,6 +63,9 @@ public class ListingDTO {
     private OffsetDateTime soldAt;
     private String soldMessageId;
     private String buyerName;
+
+    // Message timestamp (when the WhatsApp message was originally sent)
+    private OffsetDateTime messageTimestamp;
 
     // Lifecycle
     private OffsetDateTime createdAt;
@@ -116,6 +122,8 @@ public class ListingDTO {
         }
         dto.price = listing.getPrice();
         dto.priceCurrency = listing.getPriceCurrency();
+        dto.exchangeRateToUsd = listing.getExchangeRateToUsd();
+        dto.priceUsd = listing.getPriceUsd();
         if (listing.getCondition() != null) {
             dto.conditionId = listing.getCondition().getId();
             dto.conditionName = listing.getCondition().getName();
@@ -139,6 +147,11 @@ public class ListingDTO {
         dto.soldAt = listing.getSoldAt();
         dto.soldMessageId = listing.getSoldMessageId();
         dto.buyerName = listing.getBuyerName();
+
+        // Message timestamp
+        if (listing.getRawMessage() != null) {
+            dto.messageTimestamp = listing.getRawMessage().getTimestampWa();
+        }
 
         // Lifecycle
         dto.createdAt = listing.getCreatedAt();
@@ -300,6 +313,30 @@ public class ListingDTO {
         this.priceCurrency = priceCurrency;
     }
 
+    public BigDecimal getExchangeRateToUsd() {
+        return exchangeRateToUsd;
+    }
+
+    public void setExchangeRateToUsd(BigDecimal exchangeRateToUsd) {
+        this.exchangeRateToUsd = exchangeRateToUsd;
+    }
+
+    public BigDecimal getPriceUsd() {
+        return priceUsd;
+    }
+
+    public void setPriceUsd(BigDecimal priceUsd) {
+        this.priceUsd = priceUsd;
+    }
+
+    public int getCrossPostCount() {
+        return crossPostCount;
+    }
+
+    public void setCrossPostCount(int crossPostCount) {
+        this.crossPostCount = crossPostCount;
+    }
+
     public UUID getConditionId() {
         return conditionId;
     }
@@ -378,6 +415,14 @@ public class ListingDTO {
 
     public void setReviewedAt(OffsetDateTime reviewedAt) {
         this.reviewedAt = reviewedAt;
+    }
+
+    public OffsetDateTime getMessageTimestamp() {
+        return messageTimestamp;
+    }
+
+    public void setMessageTimestamp(OffsetDateTime messageTimestamp) {
+        this.messageTimestamp = messageTimestamp;
     }
 
     public OffsetDateTime getCreatedAt() {

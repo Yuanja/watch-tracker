@@ -1,5 +1,6 @@
 import { apiClient } from './client';
 import type {
+  CrossPost,
   Listing,
   ListingSearchRequest,
   ListingStats,
@@ -50,4 +51,26 @@ export async function updateListing(
  */
 export async function deleteListing(id: string): Promise<void> {
   await apiClient.delete(`/listings/${id}`);
+}
+
+/**
+ * Fetch cross-posts for a listing.
+ */
+export async function getCrossPosts(id: string): Promise<CrossPost[]> {
+  const response = await apiClient.get<CrossPost[]>(`/listings/${id}/cross-posts`);
+  return response.data;
+}
+
+/**
+ * Retry AI extraction on a listing with an optional hint.
+ */
+export async function retryExtraction(
+  id: string,
+  hint?: string
+): Promise<Listing> {
+  const response = await apiClient.post<Listing>(
+    `/listings/${id}/retry-extraction`,
+    hint ? { hint } : {}
+  );
+  return response.data;
 }

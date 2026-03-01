@@ -141,11 +141,14 @@ public class LLMExtractionService {
                     originalText
             );
 
-            String hintAddendum = "\n\n--- PREVIOUS EXTRACTION ---\n" + previousExtraction
+            String hintAddendum = "\n\n--- CURRENT LISTING (this is ONE specific listing extracted from the message above) ---\n"
+                    + previousExtraction
                     + "\n\n--- REVIEWER HINT ---\n" + humanHint
-                    + "\n\nPlease re-extract the message above, taking the reviewer's hint into account. "
-                    + "Correct any mistakes from the previous extraction based on the hint. "
-                    + "Return the same JSON format as before.";
+                    + "\n\nIMPORTANT: The message above may contain multiple watches/items, but this request is about "
+                    + "ONE SPECIFIC listing shown in CURRENT LISTING above. The reviewer's hint tells you which part "
+                    + "of the message to focus on, or what to correct about the current extraction.\n"
+                    + "Return EXACTLY ONE item in the items array — the corrected extraction for this specific listing only.\n"
+                    + "Apply the reviewer's hint to fix any mistakes. Return the same JSON format as before.";
 
             List<ChatMessage> messages = List.of(
                     new ChatMessage("user", formattedPrompt + hintAddendum)

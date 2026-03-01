@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import { MessageSquare } from 'lucide-react';
 import { getGroups, getGroupMessages } from '../../api/messages';
 import type { ReplayMessage } from '../../types/message';
@@ -12,11 +13,36 @@ const PAGE_SIZE = 40;
 /**
  * ReplayView is the main container for the WhatsApp-style message replay UI.
  * Layout: group list on the left, message thread on the right.
+ *
+ * Supports URL search params for deep-linking:
+ *   /replay?groupId=UUID&messageId=UUID
  */
 export function ReplayView() {
-  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  const [highlightMessageId, setHighlightMessageId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(
+    searchParams.get('groupId')
+  );
+  const [highlightMessageId, setHighlightMessageId] = useState<string | null>(
+    searchParams.get('messageId')
+  );
   const [searchHighlightText, setSearchHighlightText] = useState<string>('');
+
+  // Apply URL params on mount (e.g. navigating from listing detail)
+  useEffect(() => {
+    const gid = searchParams.get('groupId');
+    const mid = searchParams.get('messageId');
+    if (gid && gid !== selectedGroupId) {
+      setSelectedGroupId(gid);
+    }
+    if (mid) {
+      setHighlightMessageId(mid);
+    }
+    // Clear params after applying so back/forward doesn't re-trigger
+    if (gid || mid) {
+      setSearchParams({}, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fetch all groups
   const {

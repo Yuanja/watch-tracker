@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -97,6 +98,19 @@ public class ReplayController {
                         : "Unknown"));
         enrichWithListings(dtos.getContent());
         return ResponseEntity.ok(dtos);
+    }
+
+    @Transactional(readOnly = true)
+    @GetMapping("/{messageId}")
+    public ResponseEntity<ReplayMessageDTO> getMessage(@PathVariable UUID messageId) {
+        RawMessage msg = rawMessageRepository.findById(messageId).orElse(null);
+        if (msg == null) {
+            return ResponseEntity.notFound().build();
+        }
+        String groupName = msg.getGroup() != null ? msg.getGroup().getGroupName() : "Unknown";
+        ReplayMessageDTO dto = ReplayMessageDTO.fromEntity(msg, groupName);
+        enrichWithListings(List.of(dto));
+        return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/search")

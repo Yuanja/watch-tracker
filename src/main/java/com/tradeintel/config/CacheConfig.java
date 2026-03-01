@@ -55,6 +55,9 @@ public class CacheConfig {
     /** Cache name for the admin-managed conditions list. */
     public static final String CACHE_CONDITIONS     = "conditions";
 
+    /** Cache name for exchange rates (Frankfurter API). */
+    public static final String CACHE_EXCHANGE_RATES = "exchangeRates";
+
     @Value("${app.cache.jargon-ttl-minutes:10}")
     private long jargonTtlMinutes;
 
@@ -119,6 +122,14 @@ public class CacheConfig {
                 Caffeine.newBuilder()
                         .expireAfterWrite(conditionsTtlMinutes, TimeUnit.MINUTES)
                         .maximumSize(100)
+                        .recordStats()
+                        .build()
+        );
+
+        manager.registerCustomCache(CACHE_EXCHANGE_RATES,
+                Caffeine.newBuilder()
+                        .expireAfterWrite(24, TimeUnit.HOURS)
+                        .maximumSize(5_000)
                         .recordStats()
                         .build()
         );

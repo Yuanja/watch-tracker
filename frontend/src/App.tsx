@@ -81,7 +81,7 @@ export function App() {
       <Route element={<AuthGuard />}>
         <Route element={<AppShell />}>
           {/* Default redirect */}
-          <Route path="/" element={<Navigate to="/replay" replace />} />
+          <Route path="/" element={<Navigate to="/listings" replace />} />
 
           {/* User routes */}
           <Route path="/replay" element={<ReplayPage />} />
@@ -123,7 +123,7 @@ export function App() {
           </Route>
 
           {/* Catch-all — redirect unknown paths to replay */}
-          <Route path="*" element={<Navigate to="/replay" replace />} />
+          <Route path="*" element={<Navigate to="/listings" replace />} />
         </Route>
       </Route>
 

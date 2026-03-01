@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { clsx } from 'clsx';
 import { Code2, CornerUpRight, Share2, Sparkles, Loader2 } from 'lucide-react';
 import type { ReplayMessage, ExtractedListingRef } from '../../types/message';
-import { formatTime } from '../../utils/formatters';
+import { formatDateTime } from '../../utils/formatters';
 import { getSenderColor, getSenderAvatarBg, getSenderInitials } from '../../utils/colors';
 import { Badge } from '../common/Badge';
 import { MediaPreview } from './MediaPreview';
@@ -215,7 +215,7 @@ export function MessageBubble({
             {message.senderName ?? message.senderPhone ?? 'Unknown'}
           </span>
           <span className="text-xs text-gray-400 leading-none">
-            {formatTime(message.timestampWa)}
+            {formatDateTime(message.timestampWa)}
           </span>
           {message.isForwarded && (
             <span
@@ -313,7 +313,10 @@ export function MessageBubble({
             </button>
             {showRawJson && (
               <pre className="mt-1 max-h-64 overflow-auto rounded bg-gray-900 p-2 text-xs text-green-400 font-mono">
-                {message.rawJson}
+                {(() => {
+                  try { return JSON.stringify(JSON.parse(message.rawJson!), null, 2); }
+                  catch { return message.rawJson; }
+                })()}
               </pre>
             )}
           </div>

@@ -49,6 +49,14 @@ export async function searchMessages(
 }
 
 /**
+ * Fetch a single raw message by ID.
+ */
+export async function getMessage(messageId: string): Promise<ReplayMessage> {
+  const response = await apiClient.get<ReplayMessage>(`/messages/${messageId}`);
+  return response.data;
+}
+
+/**
  * Trigger extraction on a single message (admin only).
  */
 export async function extractMessage(

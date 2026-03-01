@@ -121,6 +121,7 @@ export function ListingsView({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50 text-left">
+              <th className="whitespace-nowrap px-4 py-3 font-medium text-gray-600">Date</th>
               <th className="px-4 py-3 font-medium text-gray-600">Description</th>
               <th className="px-4 py-3 font-medium text-gray-600">Intent</th>
               <th className="hidden px-4 py-3 font-medium text-gray-600 sm:table-cell">
@@ -132,10 +133,13 @@ export function ListingsView({
               <th className="hidden px-4 py-3 font-medium text-gray-600 md:table-cell">
                 Price
               </th>
-              <th className="px-4 py-3 font-medium text-gray-600">Status</th>
-              <th className="hidden px-4 py-3 font-medium text-gray-600 lg:table-cell">
-                Date
+              <th className="hidden whitespace-nowrap px-4 py-3 font-medium text-gray-600 md:table-cell">
+                Rate
               </th>
+              <th className="hidden whitespace-nowrap px-4 py-3 font-medium text-gray-600 md:table-cell">
+                USD Price
+              </th>
+              <th className="px-4 py-3 font-medium text-gray-600">Status</th>
               <th className="w-8 px-2 py-3" aria-hidden="true" />
             </tr>
           </thead>
@@ -150,7 +154,7 @@ export function ListingsView({
                 />
                 {expandedId === listing.id && (
                   <tr key={`${listing.id}-detail`}>
-                    <td colSpan={8} className="p-0">
+                    <td colSpan={10} className="p-0">
                       <ListingDetail
                         listing={listing}
                         canEdit={isAdmin}

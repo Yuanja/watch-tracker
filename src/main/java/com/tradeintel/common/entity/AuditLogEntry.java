@@ -10,6 +10,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -61,6 +63,7 @@ public class AuditLogEntry {
      * {@code null} for create operations.
      * Stored as JSONB; callers use Jackson for (de)serialisation.
      */
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "old_values", columnDefinition = "jsonb")
     private String oldValues;
 
@@ -69,6 +72,7 @@ public class AuditLogEntry {
      * {@code null} for delete operations.
      * Stored as JSONB; callers use Jackson for (de)serialisation.
      */
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "new_values", columnDefinition = "jsonb")
     private String newValues;
 

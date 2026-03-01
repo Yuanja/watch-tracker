@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,6 +53,7 @@ public class ConfidenceRouter {
     private final UnitRepository unitRepository;
     private final ConditionRepository conditionRepository;
     private final EmbeddingService embeddingService;
+    private final ExchangeRateService exchangeRateService;
 
     private final double autoThreshold;
     private final double reviewThreshold;
@@ -63,6 +65,7 @@ public class ConfidenceRouter {
                             UnitRepository unitRepository,
                             ConditionRepository conditionRepository,
                             EmbeddingService embeddingService,
+                            ExchangeRateService exchangeRateService,
                             @Value("${app.processing.confidence-auto-threshold}") double autoThreshold,
                             @Value("${app.processing.confidence-review-threshold}") double reviewThreshold,
                             @Value("${app.processing.listing-expiry-days}") int expiryDays) {
@@ -72,6 +75,7 @@ public class ConfidenceRouter {
         this.unitRepository = unitRepository;
         this.conditionRepository = conditionRepository;
         this.embeddingService = embeddingService;
+        this.exchangeRateService = exchangeRateService;
         this.autoThreshold = autoThreshold;
         this.reviewThreshold = reviewThreshold;
         this.expiryDays = expiryDays;
@@ -143,6 +147,21 @@ public class ConfidenceRouter {
             }
             if (item.getCurrency() != null && !item.getCurrency().isBlank()) {
                 listing.setPriceCurrency(item.getCurrency().trim().toUpperCase());
+            }
+
+            // Materialize exchange rate and USD price
+            try {
+                if (listing.getPrice() != null && listing.getPriceCurrency() != null) {
+                    LocalDate rateDate = LocalDate.now();
+                    BigDecimal rate = exchangeRateService.getRateToUsd(listing.getPriceCurrency(), rateDate);
+                    if (rate != null) {
+                        listing.setExchangeRateToUsd(rate);
+                        listing.setPriceUsd(exchangeRateService.computeUsdPrice(
+                                listing.getPrice(), listing.getPriceCurrency(), rateDate));
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Exchange rate computation failed for listing (non-fatal): {}", e.getMessage());
             }
 
             // Confidence routing
