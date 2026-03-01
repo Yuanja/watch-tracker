@@ -121,7 +121,7 @@ export function ListingsView({
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50 text-left">
-              <th className="whitespace-nowrap px-4 py-3 font-medium text-gray-600">Date</th>
+              <th className="whitespace-nowrap px-2 py-3 font-medium text-gray-600">Date</th>
               <th className="px-4 py-3 font-medium text-gray-600">Description</th>
               <th className="px-4 py-3 font-medium text-gray-600">Intent</th>
               <th className="hidden px-4 py-3 font-medium text-gray-600 sm:table-cell">
@@ -130,14 +130,14 @@ export function ListingsView({
               <th className="hidden px-4 py-3 font-medium text-gray-600 sm:table-cell">
                 Group
               </th>
-              <th className="hidden px-4 py-3 font-medium text-gray-600 md:table-cell">
+              <th className="px-4 py-3 font-medium text-gray-600">
                 Price
               </th>
               <th className="hidden whitespace-nowrap px-4 py-3 font-medium text-gray-600 md:table-cell">
                 Rate
               </th>
-              <th className="hidden whitespace-nowrap px-4 py-3 font-medium text-gray-600 md:table-cell">
-                USD Price
+              <th className="whitespace-nowrap px-4 py-3 font-medium text-gray-600">
+                USD
               </th>
               <th className="px-4 py-3 font-medium text-gray-600">Status</th>
               <th className="w-8 px-2 py-3" aria-hidden="true" />

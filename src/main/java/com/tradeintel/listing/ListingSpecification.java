@@ -106,14 +106,16 @@ public final class ListingSpecification {
                         com.tradeintel.common.entity.ListingStatus.expired));
             }
 
-            // Keyword search: case-insensitive LIKE on description and part number
+            // Keyword search: case-insensitive LIKE on description, part number, and model name
             if (request.getQuery() != null && !request.getQuery().isBlank()) {
                 String pattern = "%" + request.getQuery().trim().toLowerCase() + "%";
                 Predicate descMatch = cb.like(
                         cb.lower(root.get("itemDescription")), pattern);
                 Predicate partMatch = cb.like(
                         cb.lower(root.get("partNumber")), pattern);
-                predicates.add(cb.or(descMatch, partMatch));
+                Predicate modelMatch = cb.like(
+                        cb.lower(root.get("modelName")), pattern);
+                predicates.add(cb.or(descMatch, partMatch, modelMatch));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));

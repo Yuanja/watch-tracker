@@ -107,6 +107,26 @@ public class ExtractionResult {
         @JsonProperty("part_number")
         private String partNumber;
 
+        @JsonProperty("model_name")
+        private String modelName;
+
+        @JsonProperty("dial_color")
+        private String dialColor;
+
+        @JsonProperty("case_material")
+        private String caseMaterial;
+
+        private Integer year;
+
+        @JsonProperty("case_size_mm")
+        private Integer caseSizeMm;
+
+        @JsonProperty("set_composition")
+        private String setComposition;
+
+        @JsonProperty("bracelet_strap")
+        private String braceletStrap;
+
         private Double quantity;
         private String unit;
         private Double price;
@@ -148,6 +168,14 @@ public class ExtractionResult {
             this.partNumber = partNumber;
         }
 
+        public String getModelName() {
+            return modelName;
+        }
+
+        public void setModelName(String modelName) {
+            this.modelName = modelName;
+        }
+
         public Double getQuantity() {
             return quantity;
         }
@@ -186,6 +214,54 @@ public class ExtractionResult {
 
         public void setCondition(String condition) {
             this.condition = condition;
+        }
+
+        public String getDialColor() {
+            return dialColor;
+        }
+
+        public void setDialColor(String dialColor) {
+            this.dialColor = dialColor;
+        }
+
+        public String getCaseMaterial() {
+            return caseMaterial;
+        }
+
+        public void setCaseMaterial(String caseMaterial) {
+            this.caseMaterial = caseMaterial;
+        }
+
+        public Integer getYear() {
+            return year;
+        }
+
+        public void setYear(Integer year) {
+            this.year = year;
+        }
+
+        public Integer getCaseSizeMm() {
+            return caseSizeMm;
+        }
+
+        public void setCaseSizeMm(Integer caseSizeMm) {
+            this.caseSizeMm = caseSizeMm;
+        }
+
+        public String getSetComposition() {
+            return setComposition;
+        }
+
+        public void setSetComposition(String setComposition) {
+            this.setComposition = setComposition;
+        }
+
+        public String getBraceletStrap() {
+            return braceletStrap;
+        }
+
+        public void setBraceletStrap(String braceletStrap) {
+            this.braceletStrap = braceletStrap;
         }
     }
 }

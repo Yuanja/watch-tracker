@@ -35,6 +35,13 @@ public class ListingDTO {
     private UUID manufacturerId;
     private String manufacturerName;
     private String partNumber;
+    private String modelName;
+    private String dialColor;
+    private String caseMaterial;
+    private Integer year;
+    private Integer caseSizeMm;
+    private String setComposition;
+    private String braceletStrap;
     private BigDecimal quantity;
     private UUID unitId;
     private String unitName;
@@ -114,6 +121,13 @@ public class ListingDTO {
             dto.manufacturerName = listing.getManufacturer().getName();
         }
         dto.partNumber = listing.getPartNumber();
+        dto.modelName = listing.getModelName();
+        dto.dialColor = listing.getDialColor();
+        dto.caseMaterial = listing.getCaseMaterial();
+        dto.year = listing.getYear();
+        dto.caseSizeMm = listing.getCaseSizeMm();
+        dto.setComposition = listing.getSetComposition();
+        dto.braceletStrap = listing.getBraceletStrap();
         dto.quantity = listing.getQuantity();
         if (listing.getUnit() != null) {
             dto.unitId = listing.getUnit().getId();
@@ -263,6 +277,62 @@ public class ListingDTO {
 
     public void setPartNumber(String partNumber) {
         this.partNumber = partNumber;
+    }
+
+    public String getModelName() {
+        return modelName;
+    }
+
+    public void setModelName(String modelName) {
+        this.modelName = modelName;
+    }
+
+    public String getDialColor() {
+        return dialColor;
+    }
+
+    public void setDialColor(String dialColor) {
+        this.dialColor = dialColor;
+    }
+
+    public String getCaseMaterial() {
+        return caseMaterial;
+    }
+
+    public void setCaseMaterial(String caseMaterial) {
+        this.caseMaterial = caseMaterial;
+    }
+
+    public Integer getYear() {
+        return year;
+    }
+
+    public void setYear(Integer year) {
+        this.year = year;
+    }
+
+    public Integer getCaseSizeMm() {
+        return caseSizeMm;
+    }
+
+    public void setCaseSizeMm(Integer caseSizeMm) {
+        this.caseSizeMm = caseSizeMm;
+    }
+
+    public String getSetComposition() {
+        return setComposition;
+    }
+
+    public void setSetComposition(String setComposition) {
+        this.setComposition = setComposition;
+    }
+
+    public String getBraceletStrap() {
+        return braceletStrap;
+    }
+
+    public void setBraceletStrap(String braceletStrap) {
+        this.braceletStrap = braceletStrap;
     }
 
     public BigDecimal getQuantity() {

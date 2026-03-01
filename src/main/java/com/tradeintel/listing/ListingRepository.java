@@ -124,16 +124,15 @@ public interface ListingRepository extends JpaRepository<Listing, UUID>, JpaSpec
         JOIN   listings other
           ON   other.id != l.id
           AND  other.raw_message_id != l.raw_message_id
+          AND  other.group_id != l.group_id
           AND  other.deleted_at IS NULL
           AND  other.part_number = l.part_number
-          AND  other.price = l.price
-          AND  COALESCE(other.price_currency,'USD') = COALESCE(l.price_currency,'USD')
           AND  (
                (other.sender_name IS NOT NULL AND l.sender_name IS NOT NULL AND other.sender_name = l.sender_name)
                OR (other.sender_phone IS NOT NULL AND l.sender_phone IS NOT NULL AND other.sender_phone = l.sender_phone)
               )
         WHERE  l.id IN :listingIds AND l.deleted_at IS NULL
-          AND  l.part_number IS NOT NULL AND l.price IS NOT NULL
+          AND  l.part_number IS NOT NULL
         GROUP BY l.id
         """, nativeQuery = true)
     List<CrossPostCountProjection> countCrossPostsForListings(@Param("listingIds") List<UUID> listingIds);
@@ -142,9 +141,9 @@ public interface ListingRepository extends JpaRepository<Listing, UUID>, JpaSpec
         SELECT other.* FROM listings other
         JOIN listings l ON l.id = :listingId
         WHERE other.id != l.id AND other.raw_message_id != l.raw_message_id
+          AND other.group_id != l.group_id
           AND other.deleted_at IS NULL
-          AND other.part_number = l.part_number AND other.price = l.price
-          AND COALESCE(other.price_currency,'USD') = COALESCE(l.price_currency,'USD')
+          AND other.part_number = l.part_number
           AND ((other.sender_name IS NOT NULL AND l.sender_name IS NOT NULL AND other.sender_name = l.sender_name)
                OR (other.sender_phone IS NOT NULL AND l.sender_phone IS NOT NULL AND other.sender_phone = l.sender_phone))
         ORDER BY other.created_at DESC

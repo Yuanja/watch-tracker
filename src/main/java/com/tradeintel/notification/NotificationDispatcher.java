@@ -38,7 +38,7 @@ public class NotificationDispatcher {
     public NotificationDispatcher(JavaMailSender mailSender,
                                   NotificationRuleRepository ruleRepository,
                                   SimpMessagingTemplate messagingTemplate,
-                                  @Value("${app.mail.from-address:noreply@tradeintel.com}") String fromAddress) {
+                                  @Value("${app.mail.from-address:noreply@dialintel.ai}") String fromAddress) {
         this.mailSender = mailSender;
         this.ruleRepository = ruleRepository;
         this.messagingTemplate = messagingTemplate;
@@ -104,7 +104,7 @@ public class NotificationDispatcher {
         if (desc.length() > 60) {
             desc = desc.substring(0, 57) + "...";
         }
-        return String.format("[Trade Intel] %s Alert: %s", intent, desc);
+        return String.format("[DialIntel.ai] %s Alert: %s", intent, desc);
     }
 
     private String buildBody(NotificationRule rule, Listing listing) {
@@ -132,7 +132,7 @@ public class NotificationDispatcher {
             sb.append("  Confidence: ").append(String.format("%.0f%%", listing.getConfidenceScore() * 100)).append("\n");
         }
 
-        sb.append("\n--\nTrade Intelligence Platform\n");
+        sb.append("\n--\nDialIntel.ai\n");
         return sb.toString();
     }
 }

@@ -42,7 +42,10 @@ public class ListingSearchRequest {
     /** Filter by listing status; defaults to active in the service when null. */
     private ListingStatus status;
 
-    /** Full-text keyword search on item description and part number. */
+    /** Filter by model name keyword. */
+    private String modelName;
+
+    /** Full-text keyword search on item description, part number, and model name. */
     private String query;
 
     /** Semantic query for vector similarity search. */
@@ -131,6 +134,14 @@ public class ListingSearchRequest {
 
     public void setStatus(ListingStatus status) {
         this.status = status;
+    }
+
+    public String getModelName() {
+        return modelName;
+    }
+
+    public void setModelName(String modelName) {
+        this.modelName = modelName;
     }
 
     public String getQuery() {

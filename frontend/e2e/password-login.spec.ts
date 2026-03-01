@@ -18,7 +18,7 @@ test.describe('Password Login', () => {
   test('login page shows username and password fields', async ({ page }) => {
     await page.goto('/login');
 
-    await expect(page.getByRole('heading', { name: 'Trade Intel' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'DialIntel.ai' })).toBeVisible();
     await expect(page.getByLabel('Username')).toBeVisible();
     await expect(page.getByLabel('Password')).toBeVisible();
     await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();

@@ -76,9 +76,9 @@ export function LoginPage() {
               <MessageSquare className="h-7 w-7 text-white" />
             </div>
             <div className="text-center">
-              <h1 className="text-2xl font-bold text-gray-900">Trade Intel</h1>
+              <h1 className="text-2xl font-bold text-gray-900">DialIntel.ai</h1>
               <p className="mt-1 text-sm text-gray-500">
-                WhatsApp Trade Intelligence Platform
+                Watch Market Intelligence Platform
               </p>
             </div>
           </div>

@@ -29,6 +29,25 @@ public class ListingUpdateRequest {
     @Size(max = 200, message = "Part number must not exceed 200 characters")
     private String partNumber;
 
+    @Size(max = 255, message = "Model name must not exceed 255 characters")
+    private String modelName;
+
+    @Size(max = 100, message = "Dial color must not exceed 100 characters")
+    private String dialColor;
+
+    @Size(max = 100, message = "Case material must not exceed 100 characters")
+    private String caseMaterial;
+
+    private Integer year;
+
+    private Integer caseSizeMm;
+
+    @Size(max = 100, message = "Set composition must not exceed 100 characters")
+    private String setComposition;
+
+    @Size(max = 100, message = "Bracelet/strap must not exceed 100 characters")
+    private String braceletStrap;
+
     @DecimalMin(value = "0", message = "Quantity must be non-negative")
     private BigDecimal quantity;
 
@@ -93,6 +112,62 @@ public class ListingUpdateRequest {
 
     public void setPartNumber(String partNumber) {
         this.partNumber = partNumber;
+    }
+
+    public String getModelName() {
+        return modelName;
+    }
+
+    public void setModelName(String modelName) {
+        this.modelName = modelName;
+    }
+
+    public String getDialColor() {
+        return dialColor;
+    }
+
+    public void setDialColor(String dialColor) {
+        this.dialColor = dialColor;
+    }
+
+    public String getCaseMaterial() {
+        return caseMaterial;
+    }
+
+    public void setCaseMaterial(String caseMaterial) {
+        this.caseMaterial = caseMaterial;
+    }
+
+    public Integer getYear() {
+        return year;
+    }
+
+    public void setYear(Integer year) {
+        this.year = year;
+    }
+
+    public Integer getCaseSizeMm() {
+        return caseSizeMm;
+    }
+
+    public void setCaseSizeMm(Integer caseSizeMm) {
+        this.caseSizeMm = caseSizeMm;
+    }
+
+    public String getSetComposition() {
+        return setComposition;
+    }
+
+    public void setSetComposition(String setComposition) {
+        this.setComposition = setComposition;
+    }
+
+    public String getBraceletStrap() {
+        return braceletStrap;
+    }
+
+    public void setBraceletStrap(String braceletStrap) {
+        this.braceletStrap = braceletStrap;
     }
 
     public BigDecimal getQuantity() {

@@ -34,4 +34,14 @@ public interface ConditionRepository extends JpaRepository<Condition, UUID> {
      * @return an {@link Optional} containing the matching condition, or empty
      */
     Optional<Condition> findByNameIgnoreCase(String name);
+
+    /**
+     * Looks up a condition by its abbreviation, ignoring case.
+     * Used as a fallback during extraction when the LLM outputs a short form
+     * like "new", "BNIB", or "pre-owned" instead of the full condition name.
+     *
+     * @param abbreviation the abbreviation to search for
+     * @return an {@link Optional} containing the matching condition, or empty
+     */
+    Optional<Condition> findByAbbreviationIgnoreCase(String abbreviation);
 }

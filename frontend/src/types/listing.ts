@@ -18,6 +18,13 @@ export interface Listing {
   manufacturerId: string | null;
   manufacturerName: string | null;
   partNumber: string | null;
+  modelName: string | null;
+  dialColor: string | null;
+  caseMaterial: string | null;
+  year: number | null;
+  caseSizeMm: number | null;
+  setComposition: string | null;
+  braceletStrap: string | null;
   quantity: number | null;
   unitId: string | null;
   unitAbbreviation: string | null;

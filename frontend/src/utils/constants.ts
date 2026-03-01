@@ -1,4 +1,4 @@
-export const APP_NAME = 'Trade Intel';
+export const APP_NAME = 'DialIntel.ai';
 
 export const ROLES = {
   USER: 'user',

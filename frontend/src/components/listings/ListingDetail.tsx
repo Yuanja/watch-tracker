@@ -239,6 +239,12 @@ export function ListingDetail({ listing, canEdit, canDelete, onEdit, onDelete }:
           )}
         </div>
 
+        <DetailField label="Listing ID">
+          <code className="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-mono text-gray-700">
+            {listing.id}
+          </code>
+        </DetailField>
+
         <DetailField label="AI Parsing Confidence">
           <span className={`font-semibold ${confidenceColor(listing.confidenceScore)}`}>
             {(listing.confidenceScore * 100).toFixed(1)}%
@@ -265,6 +271,34 @@ export function ListingDetail({ listing, canEdit, canDelete, onEdit, onDelete }:
           ) : (
             <span className="text-gray-400">&mdash;</span>
           )}
+        </DetailField>
+
+        <DetailField label="Model">
+          {listing.modelName ?? <span className="text-gray-400">&mdash;</span>}
+        </DetailField>
+
+        <DetailField label="Dial Color">
+          {listing.dialColor ?? <span className="text-gray-400">&mdash;</span>}
+        </DetailField>
+
+        <DetailField label="Case Material">
+          {listing.caseMaterial ?? <span className="text-gray-400">&mdash;</span>}
+        </DetailField>
+
+        <DetailField label="Year">
+          {listing.year ?? <span className="text-gray-400">&mdash;</span>}
+        </DetailField>
+
+        <DetailField label="Case Size">
+          {listing.caseSizeMm ? `${listing.caseSizeMm}mm` : <span className="text-gray-400">&mdash;</span>}
+        </DetailField>
+
+        <DetailField label="Set Composition">
+          {listing.setComposition ?? <span className="text-gray-400">&mdash;</span>}
+        </DetailField>
+
+        <DetailField label="Bracelet/Strap">
+          {listing.braceletStrap ?? <span className="text-gray-400">&mdash;</span>}
         </DetailField>
 
         <DetailField label="Price">

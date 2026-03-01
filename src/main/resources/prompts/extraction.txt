@@ -3,6 +3,7 @@ You are a luxury watch trade message classifier for WhatsApp watch trading group
 KNOWN CATEGORIES: %s
 KNOWN MANUFACTURERS: %s
 JARGON DICTIONARY: %s
+KNOWN CONDITIONS: %s
 
 Given this WhatsApp message from a watch trading group, extract a JSON object with the following structure:
 
@@ -13,11 +14,18 @@ Given this WhatsApp message from a watch trading group, extract a JSON object wi
     "category": "match to KNOWN CATEGORIES if possible",
     "manufacturer": "match to KNOWN MANUFACTURERS if possible (brand name)",
     "part_number": "watch reference number (e.g. 126500LN, 5711/1A-010, 116610LN) or null",
+    "model_name": "watch model name (e.g. Submariner, Nautilus, Royal Oak, Daytona, Speedmaster) or null",
+    "dial_color": "dial color (e.g. black, blue, green, white, Tiffany, salmon, meteorite) or null",
+    "case_material": "case material (e.g. steel, yellow gold, rose gold, white gold, platinum, titanium, ceramic) or null",
+    "year": integer year of production or purchase (e.g. 2023) or null,
+    "case_size_mm": integer case diameter in millimeters (e.g. 36, 40, 41) or null,
+    "set_composition": "what's included (e.g. full set, box & papers, watch only, double box) or null",
+    "bracelet_strap": "bracelet or strap type (e.g. Oyster, Jubilee, President, rubber, leather, NATO) or null",
     "quantity": 1,
     "unit": "pc",
     "price": numeric value or null,
     "currency": "ISO 4217 currency code (e.g. USD, EUR, GBP, CHF, SGD, HKD, AED, MYR, AUD, JPY) or null",
-    "condition": "match to known conditions or normalize (new, pre-owned, unworn, used, mint, excellent, good, fair)"
+    "condition": "match to KNOWN CONDITIONS if possible"
   }],
   "unknown_terms": ["any abbreviations or acronyms you don't recognize from the JARGON DICTIONARY"],
   "confidence": 0.0 to 1.0
@@ -36,7 +44,14 @@ FIELD EXTRACTION GUIDELINES:
 - description: Include model name (Submariner, Nautilus, Royal Oak, etc.), year if mentioned, dial color, case material (steel, gold, titanium), bracelet/strap, box & papers status. Be concise but complete.
 - price: Parse numeric values. Handle formats like "$36,500", "36.5k", "36500", "USD 36,500", "36.5K USD". Strip currency symbols and commas. Convert "k"/"K" suffix by multiplying by 1000. Return as a plain number.
 - currency: Identify the currency from symbols or codes in the message. "$" or "USD" -> "USD", "€" or "EUR" -> "EUR", "£" or "GBP" -> "GBP", "CHF" -> "CHF", "SGD" or "S$" -> "SGD", "RM" or "MYR" -> "MYR", "AED" -> "AED", "HK$" or "HKD" -> "HKD", "A$" or "AUD" -> "AUD", "¥" or "JPY" -> "JPY". Return the ISO 4217 code. If no currency indicator is present, return null.
-- condition: Normalize to standard terms. Map "BNIB" -> "new", "like new" -> "unworn", "worn" -> "used", "great condition" -> "excellent".
+- model_name: Extract the watch model/line name (e.g. "Submariner", "Nautilus", "Royal Oak", "Daytona", "Speedmaster", "Datejust", "Aquanaut", "Overseas"). This is the model family name, NOT the reference number. If the message only has a reference number, infer the model name from it if you can (e.g. 126610LN -> "Submariner", 5711 -> "Nautilus"). Return null if unknown.
+- dial_color: Extract color of the dial. Normalize common variants ("blk" -> "black", "blnr" -> "black/blue", "chnr" -> "black/gray", "wht" -> "white", "grn" -> "green"). Return null if not mentioned.
+- case_material: Normalize to standard terms. "SS" -> "steel", "RG" -> "rose gold", "YG" -> "yellow gold", "WG" -> "white gold", "Ti" -> "titanium", "TT" -> "two-tone". Return null if not mentioned.
+- year: Extract 4-digit year. Could be preceded by "dated", "year card", or be standalone. Return null if not mentioned.
+- case_size_mm: Extract case diameter. Strip "mm" suffix. Common sizes: 36, 39, 40, 41, 42, 44. Return null if not mentioned.
+- set_composition: Normalize to: "full set" (box + papers + everything), "box & papers", "watch only", "watch + box", "double box". Return null if not mentioned.
+- bracelet_strap: Extract bracelet/strap type. For Rolex: Oyster, Jubilee, President. General: rubber, leather, NATO, mesh, bracelet. Return null if not mentioned.
+- condition: Match to KNOWN CONDITIONS whenever possible. Output the condition name or its abbreviation exactly as shown in the KNOWN CONDITIONS list. If the message says "BNIB", "unworn", "pre-owned", "like new", "NOS", etc., match it to the closest KNOWN CONDITION entry. If no match, use your best normalized description.
 - quantity: Default to 1 per watch unless explicitly stated otherwise.
 - unit: Always "pc" for watches.
 - category: Match to KNOWN CATEGORIES for watch type (e.g. "Dive Watch", "Dress Watch", "Chronograph", "Sport Watch").

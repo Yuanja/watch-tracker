@@ -5,6 +5,7 @@ import com.tradeintel.common.openai.OpenAIClient;
 import com.tradeintel.common.openai.OpenAIClient.ChatCompletionResponse;
 import com.tradeintel.common.openai.OpenAIClient.ChatMessage;
 import com.tradeintel.normalize.CategoryService;
+import com.tradeintel.normalize.ConditionService;
 import com.tradeintel.normalize.JargonService;
 import com.tradeintel.normalize.ManufacturerService;
 import org.apache.logging.log4j.LogManager;
@@ -38,6 +39,7 @@ public class LLMExtractionService {
     private final OpenAIClient openAIClient;
     private final CategoryService categoryService;
     private final ManufacturerService manufacturerService;
+    private final ConditionService conditionService;
     private final JargonService jargonService;
     private final ObjectMapper objectMapper;
     private final String extractionModel;
@@ -46,11 +48,13 @@ public class LLMExtractionService {
     public LLMExtractionService(OpenAIClient openAIClient,
                                 CategoryService categoryService,
                                 ManufacturerService manufacturerService,
+                                ConditionService conditionService,
                                 JargonService jargonService,
                                 @Value("${app.openai.extraction-model}") String extractionModel) {
         this.openAIClient = openAIClient;
         this.categoryService = categoryService;
         this.manufacturerService = manufacturerService;
+        this.conditionService = conditionService;
         this.jargonService = jargonService;
         this.objectMapper = new ObjectMapper();
         this.extractionModel = extractionModel;
@@ -75,12 +79,14 @@ public class LLMExtractionService {
             String categoriesCSV = categoryService.getAllNamesAsCSV();
             String manufacturersCSV = manufacturerService.getAllNamesWithAliasesAsCSV();
             String jargonCSV = jargonService.getVerifiedAsCSV();
+            String conditionsCSV = conditionService.getAllNamesAsCSV();
 
             String formattedPrompt = String.format(
                     promptTemplate,
                     categoriesCSV,
                     manufacturersCSV,
                     jargonCSV,
+                    conditionsCSV,
                     expandedText
             );
 
@@ -132,12 +138,14 @@ public class LLMExtractionService {
             String categoriesCSV = categoryService.getAllNamesAsCSV();
             String manufacturersCSV = manufacturerService.getAllNamesWithAliasesAsCSV();
             String jargonCSV = jargonService.getVerifiedAsCSV();
+            String conditionsCSV = conditionService.getAllNamesAsCSV();
 
             String formattedPrompt = String.format(
                     promptTemplate,
                     categoriesCSV,
                     manufacturersCSV,
                     jargonCSV,
+                    conditionsCSV,
                     originalText
             );
 

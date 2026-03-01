@@ -53,11 +53,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns(
-                        "http://localhost:5173",
-                        "http://localhost:3000",
-                        "https://*.tradeintel.com"
-                )
+                .setAllowedOriginPatterns("*")
                 .withSockJS();
 
         log.info("STOMP WebSocket endpoint registered at /ws");

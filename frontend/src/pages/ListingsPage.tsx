@@ -21,13 +21,13 @@ interface StatCardProps {
 
 function StatCard({ label, value, icon, iconBg }: StatCardProps) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm">
-      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
+    <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 shadow-sm sm:gap-4 sm:rounded-xl sm:px-5 sm:py-4">
+      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-11 sm:w-11 sm:rounded-xl ${iconBg}`}>
         {icon}
       </div>
-      <div>
-        <p className="text-sm text-gray-500">{label}</p>
-        <p className="text-2xl font-semibold text-gray-900">{value}</p>
+      <div className="min-w-0">
+        <p className="truncate text-xs text-gray-500 sm:text-sm">{label}</p>
+        <p className="text-lg font-semibold text-gray-900 sm:text-2xl">{value}</p>
       </div>
     </div>
   );
@@ -229,7 +229,7 @@ export function ListingsPage() {
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
         {statsLoading ? (
           Array.from({ length: 4 }).map((_, i) => (
             <div

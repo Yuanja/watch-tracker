@@ -133,8 +133,17 @@ public class ConfidenceRouter {
             listing.setUnit(resolveUnit(item.getUnit()));
             listing.setCondition(resolveCondition(item.getCondition()));
 
-            // Part number
+            // Part number and model name
             listing.setPartNumber(item.getPartNumber());
+            listing.setModelName(item.getModelName());
+
+            // Watch-specific detail fields
+            listing.setDialColor(item.getDialColor());
+            listing.setCaseMaterial(item.getCaseMaterial());
+            listing.setYear(item.getYear());
+            listing.setCaseSizeMm(item.getCaseSizeMm());
+            listing.setSetComposition(item.getSetComposition());
+            listing.setBraceletStrap(item.getBraceletStrap());
 
             // Quantity
             if (item.getQuantity() != null) {
@@ -227,7 +236,26 @@ public class ConfidenceRouter {
         if (name == null || name.isBlank()) {
             return null;
         }
-        return manufacturerRepository.findByNameIgnoreCase(name.trim()).orElse(null);
+        String trimmed = name.trim();
+        // Try canonical name first
+        java.util.Optional<Manufacturer> byName = manufacturerRepository.findByNameIgnoreCase(trimmed);
+        if (byName.isPresent()) {
+            return byName.get();
+        }
+        // Fallback: search aliases in-memory (avoids PostgreSQL-specific native query
+        // that would fail in H2 test environments and poison the transaction)
+        List<Manufacturer> active = manufacturerRepository.findByIsActiveTrueOrderByNameAsc();
+        return active.stream()
+                .filter(m -> {
+                    String[] aliases = m.getAliases();
+                    if (aliases == null) return false;
+                    for (String alias : aliases) {
+                        if (alias.equalsIgnoreCase(trimmed)) return true;
+                    }
+                    return false;
+                })
+                .findFirst()
+                .orElse(null);
     }
 
     private Unit resolveUnit(String name) {
@@ -244,6 +272,18 @@ public class ConfidenceRouter {
         if (name == null || name.isBlank()) {
             return null;
         }
-        return conditionRepository.findByNameIgnoreCase(name.trim()).orElse(null);
+        String trimmed = name.trim();
+        // Tier 1: exact name match
+        return conditionRepository.findByNameIgnoreCase(trimmed)
+                // Tier 2: abbreviation match (handles "new", "BNIB", "pre-owned", etc.)
+                .or(() -> conditionRepository.findByAbbreviationIgnoreCase(trimmed))
+                // Tier 3: partial name match (handles "unworn" matching "New / Unworn")
+                .or(() -> {
+                    List<Condition> all = conditionRepository.findByIsActiveTrueOrderBySortOrderAsc();
+                    return all.stream()
+                            .filter(c -> c.getName().toLowerCase().contains(trimmed.toLowerCase()))
+                            .findFirst();
+                })
+                .orElse(null);
     }
 }

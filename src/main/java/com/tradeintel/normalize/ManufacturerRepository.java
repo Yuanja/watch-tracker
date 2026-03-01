@@ -2,6 +2,8 @@ package com.tradeintel.normalize;
 
 import com.tradeintel.common.entity.Manufacturer;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -34,4 +36,17 @@ public interface ManufacturerRepository extends JpaRepository<Manufacturer, UUID
      * @return an {@link Optional} containing the matching manufacturer, or empty
      */
     Optional<Manufacturer> findByNameIgnoreCase(String name);
+
+    /**
+     * Looks up a manufacturer by alias, ignoring case.
+     * Searches the {@code aliases} text array for a matching entry so that
+     * short forms like "AP" resolve to "Audemars Piguet".
+     *
+     * @param alias the alias to search for
+     * @return an {@link Optional} containing the matching manufacturer, or empty
+     */
+    @Query(value = "SELECT m.* FROM manufacturers m WHERE m.is_active = true "
+            + "AND EXISTS (SELECT 1 FROM unnest(m.aliases) a WHERE LOWER(a) = LOWER(:alias))",
+            nativeQuery = true)
+    Optional<Manufacturer> findByAliasIgnoreCase(@Param("alias") String alias);
 }

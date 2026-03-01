@@ -169,6 +169,27 @@ public class ListingService {
         if (request.getPartNumber() != null) {
             listing.setPartNumber(request.getPartNumber().trim());
         }
+        if (request.getModelName() != null) {
+            listing.setModelName(request.getModelName().trim());
+        }
+        if (request.getDialColor() != null) {
+            listing.setDialColor(request.getDialColor().trim());
+        }
+        if (request.getCaseMaterial() != null) {
+            listing.setCaseMaterial(request.getCaseMaterial().trim());
+        }
+        if (request.getYear() != null) {
+            listing.setYear(request.getYear());
+        }
+        if (request.getCaseSizeMm() != null) {
+            listing.setCaseSizeMm(request.getCaseSizeMm());
+        }
+        if (request.getSetComposition() != null) {
+            listing.setSetComposition(request.getSetComposition().trim());
+        }
+        if (request.getBraceletStrap() != null) {
+            listing.setBraceletStrap(request.getBraceletStrap().trim());
+        }
         if (request.getQuantity() != null) {
             listing.setQuantity(request.getQuantity());
         }

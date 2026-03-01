@@ -324,7 +324,7 @@ public class ChatAgentService {
             return new String(resource.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error("Failed to load chat_system.txt prompt", e);
-            return "You are a helpful AI assistant for the WhatsApp Trade Intelligence Platform.";
+            return "You are a helpful AI assistant for DialIntel.ai, a watch market intelligence platform.";
         }
     }
 

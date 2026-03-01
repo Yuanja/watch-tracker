@@ -18,8 +18,7 @@ function formatPrice(price: number | null, currency: string): string {
 function formatTimestamp(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, '0');
-  const tz = d.toLocaleTimeString('en-US', { timeZoneName: 'short' }).split(' ').pop();
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${tz}`;
+  return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function formatUsdPrice(priceUsd: number | null): string {
@@ -54,11 +53,14 @@ export function ListingCard({ listing, isExpanded, onToggle, onAssist }: Listing
           }
         }}
       >
-        <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-500">
+        <td className="whitespace-nowrap px-2 py-3 text-xs text-gray-500">
           {formatTimestamp(listing.messageTimestamp ?? listing.createdAt)}
         </td>
         <td className="px-4 py-3">
           <span className="line-clamp-2 max-w-xs text-gray-900">
+            {listing.modelName && (
+              <span className="font-medium text-gray-700">{listing.modelName} &middot; </span>
+            )}
             {listing.itemDescription}
           </span>
         </td>
@@ -73,7 +75,7 @@ export function ListingCard({ listing, isExpanded, onToggle, onAssist }: Listing
         <td className="hidden px-4 py-3 text-gray-600 sm:table-cell">
           {listing.groupName ?? <span className="text-gray-400">&mdash;</span>}
         </td>
-        <td className="hidden px-4 py-3 text-gray-700 md:table-cell">
+        <td className="px-4 py-3 text-gray-700">
           {formatPrice(listing.price, listing.priceCurrency)}
         </td>
         <td className="hidden whitespace-nowrap px-4 py-3 text-xs text-gray-500 md:table-cell">
@@ -81,7 +83,7 @@ export function ListingCard({ listing, isExpanded, onToggle, onAssist }: Listing
             ? listing.exchangeRateToUsd.toFixed(4)
             : <span className="text-gray-300">&mdash;</span>}
         </td>
-        <td className="hidden whitespace-nowrap px-4 py-3 text-gray-700 md:table-cell">
+        <td className="whitespace-nowrap px-4 py-3 text-gray-700">
           {listing.priceUsd != null
             ? formatUsdPrice(listing.priceUsd)
             : <span className="text-gray-300">&mdash;</span>}

@@ -179,7 +179,7 @@ export function Sidebar({ onClose: _onClose }: SidebarProps) {
         <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-600">
           <MessageSquare className="h-4 w-4 text-white" />
         </div>
-        <span className="text-base font-semibold text-gray-900">Trade Intel</span>
+        <span className="text-base font-semibold text-gray-900">DialIntel.ai</span>
       </div>
 
       {/* Navigation */}

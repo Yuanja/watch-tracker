@@ -6,15 +6,10 @@ test.describe('Login Page', () => {
 
     // Should display the app title (use heading role to be specific)
     await expect(
-      page.getByRole('heading', { name: 'Trade Intel' })
+      page.getByRole('heading', { name: 'DialIntel.ai' })
     ).toBeVisible();
     await expect(
-      page.getByText('WhatsApp Trade Intelligence Platform')
-    ).toBeVisible();
-
-    // Should display the sign-in prompt
-    await expect(
-      page.getByText('Sign in to access the platform')
+      page.getByText('Watch Market Intelligence Platform')
     ).toBeVisible();
 
     // Should display the Google sign-in button
